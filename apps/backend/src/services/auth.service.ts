@@ -17,6 +17,7 @@ export type SafeUser = {
   email: string
   name: string
   emailVerified: boolean
+  avatarUrl: string | null
   createdAt: string
 }
 
@@ -33,6 +34,7 @@ type UserWithTokens = {
   email: string
   name: string
   emailVerified: boolean
+  avatarUrl: string | null
   createdAt: Date
 }
 
@@ -41,6 +43,7 @@ const toSafeUser = (user: UserWithTokens): SafeUser => ({
   email: user.email,
   name: user.name,
   emailVerified: user.emailVerified,
+  avatarUrl: user.avatarUrl,
   createdAt: user.createdAt.toISOString(),
 })
 
@@ -100,7 +103,14 @@ async function issueSession(db: PrismaClient, user: UserWithTokens, jwtSecret: s
 
 export async function signup(
   db: PrismaClient,
-  input: { email: string; name: string; password: string; jwtSecret: string } & EmailContext
+  input: {
+    email: string
+    name: string
+    password: string
+    jwtSecret: string
+    /** Cloudflare `executionCtx.waitUntil`; without it the worker may exit before the mail is sent. */
+    waitUntil?: (promise: Promise<unknown>) => void
+  } & EmailContext
 ): Promise<{ user: SafeUser }> {
   const email = normalizeEmail(input.email)
   const existing = await db.user.findUnique({ where: { email } })
@@ -127,9 +137,16 @@ export async function signup(
     update: { token, expiresAt },
   })
 
-  void sendVerificationMail(input, { to: email, name: user.name, token }).catch((err) => {
-    console.error('[ontrack] verification email failed', err)
-  })
+  const mailPromise = sendVerificationMail(input, { to: email, name: user.name, token }).catch(
+    (err) => {
+      console.error('[ontrack] verification email failed', err)
+    }
+  )
+  // On Workers, awaiting the mail delays the response and a fire-and-forget
+  // promise can be cancelled when the isolate is torn down. waitUntil is the
+  // only correct middle ground.
+  if (input.waitUntil) input.waitUntil(mailPromise)
+  else await mailPromise
 
   return { user: toSafeUser(user) }
 }

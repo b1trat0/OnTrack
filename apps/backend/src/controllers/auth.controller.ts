@@ -46,11 +46,20 @@ export const handleSignup = (c: Context) =>
     const body = await validateBody(c, signupSchema)
     if (!body.ok) return body.response
     const db = prismaClient(c.env.DATABASE_URL)
+    const waitUntil = (promise: Promise<unknown>): void => {
+      try {
+        c.executionCtx.waitUntil(promise)
+      } catch {
+        // Local Node/tests have no execution context; let the promise run.
+        void promise
+      }
+    }
     const { user } = await authService.signup(db, {
       ...body.data,
       jwtSecret: c.env.JWT_SECRET,
       resendApiKey: c.env.RESEND_API_KEY,
       webUrl: c.env.WEB_URL,
+      waitUntil,
     })
     return ok(c, { user }, 201)
   })

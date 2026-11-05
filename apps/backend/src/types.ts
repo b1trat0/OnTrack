@@ -3,6 +3,7 @@ export type Env = {
   JWT_SECRET: string
   RESEND_API_KEY: string
   WEB_URL: string
+  CORS_ORIGINS?: string
   OPENROUTER_API_KEY: string
   MODEL_KEY_ENCRYPTION_KEY: string
   INTEGRATION_ENCRYPTION_KEY: string
