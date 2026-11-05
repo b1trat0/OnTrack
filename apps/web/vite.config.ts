@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // Production stays strict. Development has to allow Vite's inline React Refresh
 // preamble and the HMR websocket. Google Fonts are still remote until P2
@@ -28,6 +29,36 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      devOptions: { enabled: false },
+      includeAssets: ['theme-init.js', 'icons/icon-192.png', 'icons/icon-512.png'],
+      manifest: {
+        name: 'OnTrack',
+        short_name: 'OnTrack',
+        description: 'ADHD-friendly notes, calendar, diary, timer, and agents.',
+        theme_color: '#C2410C',
+        background_color: '#FFF7ED',
+        display: 'standalone',
+        start_url: './',
+        scope: './',
+        icons: [
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          {
+            src: 'icons/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
+        ],
+      },
+      workbox: {
+        navigateFallback: 'index.html',
+        globPatterns: ['**/*.{js,css,html,woff2,svg,png,ico}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+      },
+    }),
     {
       name: 'inject-csp',
       transformIndexHtml(html) {

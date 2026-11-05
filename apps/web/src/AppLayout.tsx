@@ -6,6 +6,7 @@ import { ToastHost } from './global/ui/ToastHost'
 import { CommandPalette } from './features/search/CommandPalette'
 import { OnboardingModal } from './features/onboarding/OnboardingModal'
 import { useUserStore } from './global/stores/useUserStore'
+import { OfflineBanner } from './global/ui/OfflineBanner'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -87,7 +88,7 @@ export function AppLayout() {
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6 xl:p-8">
+        <main className="min-w-0 flex-1 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 xl:p-8">
           <div key={location.pathname} className="page-enter">
             <Outlet />
           </div>
@@ -139,6 +140,7 @@ export function AppLayout() {
       ) : null}
 
       <ToastHost />
+      <OfflineBanner />
       <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
       <OnboardingModal open={onboardingOpen} onClose={closeOnboarding} />
     </div>
