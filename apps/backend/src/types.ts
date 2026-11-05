@@ -11,6 +11,13 @@ export type Env = {
   GOOGLE_CLIENT_ID: string
   GOOGLE_CLIENT_SECRET: string
   GOOGLE_REDIRECT_URI: string
+  STRIPE_SECRET_KEY?: string
+  STRIPE_WEBHOOK_SECRET?: string
+  STRIPE_PRICE_PRO_MONTHLY?: string
+  STRIPE_PRICE_PRO_YEARLY?: string
+  PRO_PRICE_MONTHLY?: string
+  PRO_PRICE_YEARLY?: string
+  BILLING_CURRENCY?: string
 }
 
 export type AppVariables = {

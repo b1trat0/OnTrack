@@ -10,6 +10,7 @@ import toolsRouter from './routes/tools.router'
 import messagesRouter from './routes/messages.router'
 import templatesRouter from './routes/templates.router'
 import runsRouter from './routes/runs.router'
+import billingRouter from './routes/billing.router'
 import type { AppVariables, Env } from './types'
 
 const app = new Hono<{ Bindings: Env; Variables: AppVariables }>()
@@ -77,6 +78,7 @@ app.route('/api/agents', agentsRouter)
 app.route('/api/model-keys', modelKeysRouter)
 app.route('/api/tools', toolsRouter)
 app.route('/api/templates', templatesRouter)
+app.route('/api/billing', billingRouter)
 app.route('/api', runsRouter)
 
 export default app

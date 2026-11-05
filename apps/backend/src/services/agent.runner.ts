@@ -19,6 +19,7 @@ import { createMessage } from './messages.service'
 import { createAppointment } from './appointment.service'
 import { createTask } from './task.service'
 import { resolveOutputDestinations, type OutputDestination } from '../lib/output-destination'
+import { getEntitlements, type PlanId } from './entitlements.service'
 
 export const DAILY_RUN_LIMIT = 50
 export const MONTHLY_TOKEN_BUDGET = 500_000
@@ -330,7 +331,7 @@ function toRunListItem(run: {
 }
 
 export type RunUsage = {
-  plan: 'beta'
+  plan: PlanId
   dailyRuns: number
   dailyRunLimit: number
   monthlyTokens: number
@@ -344,6 +345,7 @@ export async function getRunUsage(
   userId: string,
   timeZone = 'UTC'
 ): Promise<RunUsage> {
+  const entitlements = await getEntitlements(db, userId)
   const dayStart = startOfDayInTimeZone(timeZone)
   const monthStart = new Date()
   monthStart.setUTCDate(1)
@@ -358,11 +360,11 @@ export async function getRunUsage(
   ])
 
   return {
-    plan: 'beta',
+    plan: entitlements.plan,
     dailyRuns,
-    dailyRunLimit: DAILY_RUN_LIMIT,
+    dailyRunLimit: entitlements.dailyRuns,
     monthlyTokens: monthly._sum.tokensUsed ?? 0,
-    monthlyTokenLimit: MONTHLY_TOKEN_BUDGET,
+    monthlyTokenLimit: entitlements.monthlyTokens,
     monthStart: monthStart.toISOString(),
   }
 }
@@ -379,6 +381,7 @@ export async function runAgent(
     throw new AppError('CONFLICT', 'This agent is already running.', 409)
   }
 
+  const entitlements = await getEntitlements(db, userId)
   const dayStart = startOfDayInTimeZone(timeZone)
   const monthStart = new Date()
   monthStart.setUTCDate(1)
@@ -393,13 +396,13 @@ export async function runAgent(
       _sum: { tokensUsed: true },
     }),
   ])
-  if (todayCount >= DAILY_RUN_LIMIT) {
-    throw new AppError('RATE_LIMIT', 'Daily run limit reached (50).', 429)
+  if (todayCount >= entitlements.dailyRuns) {
+    throw new AppError('RATE_LIMIT', `Daily run limit reached (${entitlements.dailyRuns}).`, 429)
   }
-  if ((monthlyUsage._sum.tokensUsed ?? 0) >= MONTHLY_TOKEN_BUDGET) {
+  if ((monthlyUsage._sum.tokensUsed ?? 0) >= entitlements.monthlyTokens) {
     throw new AppError(
       'BUDGET_EXCEEDED',
-      `Monthly token budget reached (${MONTHLY_TOKEN_BUDGET.toLocaleString()} tokens).`,
+      `Monthly token budget reached (${entitlements.monthlyTokens.toLocaleString()} tokens).`,
       429
     )
   }
