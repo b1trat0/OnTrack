@@ -33,6 +33,9 @@ const DashboardPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('./features/settings/SettingsPage').then((module) => ({ default: module.SettingsPage }))
 )
+const PlansPage = lazy(() =>
+  import('./features/plans/PlansPage').then((module) => ({ default: module.PlansPage }))
+)
 const SignInPage = lazy(() =>
   import('./features/auth/SignInPage').then((module) => ({ default: module.SignInPage }))
 )
@@ -92,6 +95,7 @@ export function App() {
                   <Route path="timer" element={<TimerPage />} />
                   <Route path="calendar" element={<CalendarPage />} />
                   <Route path="settings" element={<SettingsPage />} />
+                  <Route path="plans" element={<PlansPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
               </Route>

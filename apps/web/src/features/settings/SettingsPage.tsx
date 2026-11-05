@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Download, KeyRound, LogOut, ShieldAlert, Trash2, UserRound } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Download, Gauge, KeyRound, LogOut, ShieldAlert, Trash2, UserRound } from 'lucide-react'
 import { useUserStore } from '../../global/stores/useUserStore'
 import { useToastStore } from '../../global/stores/useToastStore'
 import { toErrorMessage } from '../../global/lib/api'
@@ -188,6 +188,24 @@ export function SettingsPage() {
               <Download size={14} />
               {exporting ? 'Preparing…' : 'Download JSON'}
             </Button>
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Gauge size={16} className="text-(--accent)" />
+            Plan &amp; usage
+          </h2>
+          <p className="mt-1 text-xs text-(--text-muted)">
+            Beta is BYOK and free. See runs and token guardrails for the current month.
+          </p>
+          <div className="mt-4 flex justify-end">
+            <Link
+              to="/plans"
+              className="inline-flex items-center gap-2 rounded-xl bg-(--accent-soft) px-4 py-2 text-sm font-medium text-(--accent) transition hover:brightness-95"
+            >
+              View plan &amp; usage
+            </Link>
           </div>
         </Card>
 

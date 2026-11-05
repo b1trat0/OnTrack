@@ -171,6 +171,19 @@ export type AgentRunListDto = {
   hasMore: boolean
 }
 
+export type AgentUsageDto = {
+  plan: 'beta'
+  dailyRuns: number
+  dailyRunLimit: number
+  monthlyTokens: number
+  monthlyTokenLimit: number
+  monthStart: string
+}
+
+export async function getAgentUsage(): Promise<AgentUsageDto> {
+  return api<AgentUsageDto>('/api/agents/usage')
+}
+
 export async function listRuns(
   agentId: string,
   opts: { limit?: number; offset?: number } = {}

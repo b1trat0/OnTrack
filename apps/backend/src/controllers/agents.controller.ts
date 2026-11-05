@@ -61,6 +61,14 @@ export const handleListAgents = (c: Context) =>
     return ok(c, agents)
   })
 
+export const handleGetUsage = (c: Context) =>
+  handle(c, async () => {
+    const db = prismaClient(c.env)
+    const cf = (c.req.raw as Request & { cf?: { timezone?: string } }).cf
+    const usage = await agentRunner.getRunUsage(db, c.get('userId'), cf?.timezone ?? 'UTC')
+    return ok(c, usage)
+  })
+
 export const handleGetAgent = (c: Context) =>
   handle(c, async () => {
     const agentId = idGuard(c.req.param('id'))

@@ -20,8 +20,8 @@ import { createAppointment } from './appointment.service'
 import { createTask } from './task.service'
 import { resolveOutputDestinations, type OutputDestination } from '../lib/output-destination'
 
-const DAILY_RUN_LIMIT = 50
-const MONTHLY_TOKEN_BUDGET = 500_000
+export const DAILY_RUN_LIMIT = 50
+export const MONTHLY_TOKEN_BUDGET = 500_000
 const STALE_RUN_MS = 15 * 60 * 1000
 
 /**
@@ -326,6 +326,44 @@ function toRunListItem(run: {
     durationMs: run.finishedAt ? run.finishedAt.getTime() - run.startedAt.getTime() : 0,
     error: run.error ?? undefined,
     startedAt: run.startedAt.toISOString(),
+  }
+}
+
+export type RunUsage = {
+  plan: 'beta'
+  dailyRuns: number
+  dailyRunLimit: number
+  monthlyTokens: number
+  monthlyTokenLimit: number
+  monthStart: string
+}
+
+/** Usage shown on the plan page; mirrors the runner's quota windows. */
+export async function getRunUsage(
+  db: PrismaClient,
+  userId: string,
+  timeZone = 'UTC'
+): Promise<RunUsage> {
+  const dayStart = startOfDayInTimeZone(timeZone)
+  const monthStart = new Date()
+  monthStart.setUTCDate(1)
+  monthStart.setUTCHours(0, 0, 0, 0)
+
+  const [dailyRuns, monthly] = await Promise.all([
+    db.agentRun.count({ where: { userId, startedAt: { gte: dayStart } } }),
+    db.agentRun.aggregate({
+      where: { userId, startedAt: { gte: monthStart } },
+      _sum: { tokensUsed: true },
+    }),
+  ])
+
+  return {
+    plan: 'beta',
+    dailyRuns,
+    dailyRunLimit: DAILY_RUN_LIMIT,
+    monthlyTokens: monthly._sum.tokensUsed ?? 0,
+    monthlyTokenLimit: MONTHLY_TOKEN_BUDGET,
+    monthStart: monthStart.toISOString(),
   }
 }
 
