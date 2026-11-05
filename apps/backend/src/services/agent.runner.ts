@@ -18,8 +18,10 @@ import { getGmailAccessToken } from './integrations.service'
 import { createMessage } from './messages.service'
 import { createAppointment } from './appointment.service'
 import { createTask } from './task.service'
+
 import { resolveOutputDestinations, type OutputDestination } from '../lib/output-destination'
 import { getEntitlements, type PlanId } from './entitlements.service'
+
 
 export const DAILY_RUN_LIMIT = 50
 export const MONTHLY_TOKEN_BUDGET = 500_000
@@ -574,6 +576,7 @@ export async function runAgent(
       },
     })
 
+
     // Dated events the calendar destination already wrote are withheld, so the
     // approval modal cannot create a duplicate appointment for the same line.
     const pendingRemaining = pendingActions.filter((action) => !written.consumed.includes(action))
@@ -586,6 +589,7 @@ export async function runAgent(
             (candidate.date ?? '') === (action.date ?? '')
         ) === index
     )
+
 
     return {
       runId: run.id,
