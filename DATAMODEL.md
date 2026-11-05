@@ -547,7 +547,8 @@ Validation: `date` `YYYY-MM-DD`, `month` `YYYY-MM`, `mood` ∈ `great|good|okay|
 
 | Method | Path                    | Body / Query                 | Returns                                   |
 | ------ | ----------------------- | ---------------------------- | ----------------------------------------- |
-| GET    | `/api/agents`           | —                            | `{ data: Agent[] }` (tools included)      |
+| GET    | `/api/agents`           | —                            | `{ data: Agent[] }` (tools included); seeds defaults when the user has zero agents |
+| GET    | `/api/agents/usage`     | —                            | `{ data: { plan, dailyRuns, dailyRunLimit, monthlyTokens, monthlyTokenLimit, monthStart } }` |
 | POST   | `/api/agents`           | `{ name, role, icon, color, description, preferences?, templateId?, prompt?, sources?, output?, draftOnly?, modelKeyId?, maxTokens?, tools? }` | `201 { data: Agent }` (template defaults + `AgentTool` rows applied when `templateId` set; `tools` is the enabled registry-name set and wins over template defaults) |
 | GET    | `/api/agents/:id`       | —                            | `{ data: Agent }`                         |
 | PATCH  | `/api/agents/:id`       | any subset of the above      | `{ data: Agent }` (at least one field)    |

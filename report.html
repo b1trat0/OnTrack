@@ -204,31 +204,31 @@
     <div class="hero-grid">
       <div class="panel hero-card">
         <div class="gauge">
-          <svg viewBox="0 0 120 120" aria-label="Overall score 7.9 out of 10">
+          <svg viewBox="0 0 120 120" aria-label="Overall score 8.0 out of 10">
             <circle cx="60" cy="60" r="50" fill="none" stroke="#1e2533" stroke-width="10"/>
             <circle cx="60" cy="60" r="50" fill="none" stroke="url(#grad)" stroke-width="10"
-              stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="66"/>
+              stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="63"/>
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0" stop-color="#ff7a45"/><stop offset="1" stop-color="#8b7bff"/>
               </linearGradient>
             </defs>
           </svg>
-          <div class="num"><b>7.9</b><span>of 10</span></div>
+          <div class="num"><b>8.0</b><span>of 10</span></div>
         </div>
         <div class="verdict">
-          <h3>Ship a private beta. Not a public SaaS yet.</h3>
+          <h3>Private beta ready. Public SaaS needs billing and CI.</h3>
           <p>
-            Engineering quality, security, and UX are now above the bar for a private beta.
-            The remaining gap to a 9 is commercial and operational: billing, CI/E2E, mobile,
-            and a full accessibility audit.
+            Engineering, security, UX, and account/plan surfaces now clear the beta bar.
+            The last point to 9 is commercial and operational: payment plans, CI/E2E,
+            mobile/PWA, task archive, and a full accessibility audit.
           </p>
           <div class="chip-row">
-            <span class="chip good">P0–P2 shipped</span>
-            <span class="chip good">21 critical/high fixed</span>
-            <span class="chip good">Lint + build green</span>
-            <span class="chip bad">No CI/E2E</span>
-            <span class="chip">206 tests</span>
+            <span class="chip good">P0–P2 + SaaS basics</span>
+            <span class="chip good">Plan + usage page</span>
+            <span class="chip good">Notification centre</span>
+            <span class="chip bad">No payment provider</span>
+            <span class="chip">212 tests</span>
           </div>
         </div>
       </div>
@@ -236,7 +236,7 @@
       <div class="kpis">
         <div class="kpi"><b>12,345</b><span>lines of app code</span><small>web 8,321 · API 3,829 · Electron 195</small></div>
         <div class="kpi"><b>48</b><span>HTTP endpoints</span><small>across 11 routers</small></div>
-        <div class="kpi"><b>206</b><span>tests · 0 failing</span><small>203 pass · 3 skipped</small></div>
+        <div class="kpi"><b>212</b><span>tests · 0 failing</span><small>209 pass · 3 skipped</small></div>
         <div class="kpi"><b>267 kB</b><span>main JS chunk</span><small>81.8 kB gzip · routes + vendors split</small></div>
       </div>
     </div>
@@ -299,7 +299,7 @@
         <h2>Post-hardening status</h2>
         <p>What changed after the original audit, and what is still honestly missing.</p>
       </div>
-      <span class="count">P0 10/10 · P1 12/12 · P2 15/18</span>
+      <span class="count">P0 10/10 · P1 12/12 · P2 15/18 · SaaS 4/4</span>
     </div>
     <div class="summary-grid">
       <div class="summary good">
@@ -315,6 +315,7 @@
           <li>Settings, search, onboarding, 404, error boundary, focus-trapped dialogs, keyboard menus.</li>
           <li>Self-hosted fonts, pre-paint theme, lazy routes, vendor chunks, reduced motion, contrast tokens.</li>
           <li>Structured logs, request IDs, health check, optional Hyperdrive, lint fixed.</li>
+          <li>SaaS basics: plan/usage page, notification centre, profile/export/delete, README, deployment runbook.</li>
         </ul>
       </div>
       <div class="summary warn">
@@ -324,13 +325,13 @@
           <li>Task pagination/archive for a done column that grows without bound.</li>
           <li>Full accessibility audit (axe), minimum 12px auxiliary text, keyboard pass on every control.</li>
           <li>Distributed rate limiter (current limiter is per-isolate), alerting, metrics dashboards.</li>
-          <li>README rewrite and deployment runbook (README is still the Turbotron template).</li>
+          <li>Payment provider for a paid plan, plus mobile/PWA; the beta plan remains BYOK.</li>
         </ul>
       </div>
       <div class="summary bad">
         <h3>✕ Not in this scope</h3>
         <ul>
-          <li>Billing, plans, quotas UI, trial; OnTrack remains BYOK.</li>
+          <li>Payment provider/billing: the plan page is honest beta + usage, not checkout.</li>
           <li>Teams/workspaces, realtime multi-device sync, mobile/PWA.</li>
           <li>Agent scheduling/streaming/chat, template marketplace, more integrations.</li>
           <li>Full calendar sync, diary insights, timer history, task subtasks/recurrence.</li>
@@ -341,7 +342,7 @@
     <div class="callout">
       <span>◆</span>
       <div><b>Honest score:</b> engineering dimensions are now ~8–9; product/testing/ops dimensions
-      are 6–8 because the unselected test/CI and SaaS packages are still missing. The findings
+      are 6.5–8 because CI/E2E and a payment/mobile layer are still missing. The findings
       below remain the original audit snapshot; the status section above is the current truth.</div>
     </div>
   </section>
@@ -353,7 +354,7 @@
         <h2>Scorecard</h2>
         <p>Weighted for a multi-tenant SaaS, not for a personal side project. Weights reflect blast radius.</p>
       </div>
-      <span class="count">weighted overall · 7.9 / 10</span>
+      <span class="count">weighted overall · 8.0 / 10</span>
     </div>
     <div class="panel" style="padding:22px 24px">
       <div class="score-grid">
@@ -367,9 +368,9 @@
         <div class="score"><div class="score-top"><span>Performance</span><span>weight 5%</span><b>8.0</b></div><div class="bar good"><i style="width:80%"></i></div></div>
         <div class="score"><div class="score-top"><span>Scalability</span><span>weight 5%</span><b>7.5</b></div><div class="bar warn"><i style="width:75%"></i></div></div>
         <div class="score"><div class="score-top"><span>Accessibility</span><span>weight 5%</span><b>8.0</b></div><div class="bar good"><i style="width:80%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Docs &amp; developer experience</span><span>weight 5%</span><b>6.5</b></div><div class="bar warn"><i style="width:65%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Docs &amp; developer experience</span><span>weight 5%</span><b>7.5</b></div><div class="bar warn"><i style="width:75%"></i></div></div>
         <div class="score"><div class="score-top"><span>Observability</span><span>weight 4%</span><b>7.5</b></div><div class="bar warn"><i style="width:75%"></i></div></div>
-        <div class="score"><div class="score-top"><span>SaaS readiness</span><span>weight 5%</span><b>6.0</b></div><div class="bar warn"><i style="width:60%"></i></div></div>
+        <div class="score"><div class="score-top"><span>SaaS readiness</span><span>weight 5%</span><b>7.0</b></div><div class="bar warn"><i style="width:70%"></i></div></div>
       </div>
     </div>
   </section>
