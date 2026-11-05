@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { TOOL_REGISTRY, listAvailableTools } from '../apps/backend/src/services/tools.service.ts'
+import { TOOL_REGISTRY, listAvailableTools } from '../apps/backend/src/lib/tool-registry.ts'
 
 test('tool registry contains the 14 seed tools', () => {
   assert.equal(TOOL_REGISTRY.length, 14)
