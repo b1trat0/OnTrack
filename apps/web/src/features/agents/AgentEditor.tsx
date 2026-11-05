@@ -438,7 +438,8 @@ export function AgentEditor({ open, initial, template, onClose, onSave }: AgentE
               </Field>
 
               <p className="rounded-xl bg-(--surface-2) px-3 py-2 text-xs text-(--text-muted)">
-                Budget: 100K tokens/day included. Overage at $0.002 per 1K tokens.
+                Runs use the selected model key. Your provider bills those tokens directly —
+                OnTrack does not resell tokens or apply its own overage.
               </p>
             </div>
           ) : null}
