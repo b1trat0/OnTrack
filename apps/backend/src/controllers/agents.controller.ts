@@ -33,6 +33,7 @@ const createAgentSchema = z.object({
   draftOnly: z.boolean().optional(),
   modelKeyId: z.string().nullable().optional(),
   maxTokens: z.number().int().min(500).max(8000).optional(),
+  tools: z.array(z.string().min(1).max(64)).max(20).optional(),
 })
 
 const updateAgentSchema = z
@@ -49,6 +50,7 @@ const updateAgentSchema = z
     draftOnly: z.boolean().optional(),
     modelKeyId: z.string().nullable().optional(),
     maxTokens: z.number().int().min(500).max(8000).optional(),
+    tools: z.array(z.string().min(1).max(64)).max(20).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, 'At least one field is required')
 

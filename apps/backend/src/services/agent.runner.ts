@@ -96,6 +96,11 @@ type WriteOutputResult = {
    * `RunResult.pendingActions` so the approval modal cannot create a second copy.
    */
   consumed: PendingAction[]
+  /**
+   * Draft-mode proposals. When `draftOnly` is on, a configured notes/calendar
+   * destination does not write; it proposes an item for the user to approve.
+   */
+  proposed: PendingAction[]
 }
 
 const CALENDAR_COLOR = '#8b5cf6'
@@ -133,12 +138,16 @@ async function writeOutput(
   outputTypes: readonly string[],
   aiText: string,
   agentName: string,
+  draftOnly: boolean,
   actions: PendingAction[]
 ): Promise<WriteOutputResult> {
   const destinations = resolveOutputDestinations(outputTypes)
   const records: OutputRecord[] = []
   const consumed: PendingAction[] = []
+  const proposed: PendingAction[] = []
   const wroteNotes = { value: false }
+  const today = new Date().toISOString().slice(0, 10)
+  let proposedNote = false
 
   const writeNote = async (title: string, fallbackFrom?: OutputDestination) => {
     const task = await createTask(db, userId, {
@@ -156,6 +165,14 @@ async function writeOutput(
     wroteNotes.value = true
   }
 
+  // In draft mode the Notes destination becomes a proposal, not a write. The
+  // full output travels in `note` so approving it creates a complete card.
+  const proposeNote = (title: string) => {
+    if (proposedNote) return
+    proposedNote = true
+    proposed.push({ kind: 'task', title, date: today, note: aiText })
+  }
+
   for (const destination of destinations) {
     if (destination === 'inbox') {
       const message = await createMessage(db, userId, agentId, `${agentName} output`, aiText)
@@ -164,6 +181,10 @@ async function writeOutput(
     }
 
     if (destination === 'notes') {
+      if (draftOnly) {
+        proposeNote(titleFromOutput(agentName, aiText))
+        continue
+      }
       await writeNote(titleFromOutput(agentName, aiText))
       continue
     }
@@ -173,9 +194,19 @@ async function writeOutput(
       // Nothing to schedule. Writing an undated event would put a phantom row on
       // the calendar, so the output becomes a note instead — unless the notes
       // destination already wrote this same text, in which case it is covered.
+      if (draftOnly) {
+        proposeNote(titleFromOutput(agentName, aiText))
+        continue
+      }
       if (!wroteNotes.value) {
         await writeNote(titleFromOutput(agentName, aiText), 'calendar')
       }
+      continue
+    }
+
+    if (draftOnly) {
+      // Dated [EVENT] lines are already parsed into pendingActions by the caller.
+      // Proposing them again here would show duplicates in the approval modal.
       continue
     }
 
@@ -194,7 +225,7 @@ async function writeOutput(
     }
   }
 
-  return { destinations, records, consumed }
+  return { destinations, records, consumed, proposed }
 }
 
 export type RunResult = {
@@ -332,9 +363,10 @@ export async function runAgent(
         db,
         userId,
         agentId,
-        agent.output,
+        ['message'],
         explanation,
         agent.name,
+        agent.draftOnly,
         []
       )
       await db.agentRun.update({
@@ -393,6 +425,7 @@ export async function runAgent(
       agent.output,
       cleanedText,
       agent.name,
+      agent.draftOnly,
       pendingActions
     )
 
@@ -416,7 +449,16 @@ export async function runAgent(
 
     // Dated events the calendar destination already wrote are withheld, so the
     // approval modal cannot create a duplicate appointment for the same line.
-    const remaining = pendingActions.filter((action) => !written.consumed.includes(action))
+    const pendingRemaining = pendingActions.filter((action) => !written.consumed.includes(action))
+    const remaining = [...written.proposed, ...pendingRemaining].filter(
+      (action, index, list) =>
+        list.findIndex(
+          (candidate) =>
+            candidate.kind === action.kind &&
+            candidate.title === action.title &&
+            (candidate.date ?? '') === (action.date ?? '')
+        ) === index
+    )
 
     return {
       runId: run.id,

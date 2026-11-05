@@ -47,6 +47,18 @@ export type CreateAgentInput = {
   draftOnly?: boolean
   modelKeyId?: string
   maxTokens?: number
+  /** Enabled tool names. Omit to inherit the template defaults. */
+  tools?: string[]
+}
+
+/**
+ * Agent updates carry the enabled tool set as names, not as the AgentTool rows
+ * the API returns. The backend diffs this list against the stored rows.
+ */
+export type UpdateAgentInput = Partial<
+  Omit<AgentDto, 'id' | 'createdAt' | 'updatedAt' | 'tools'>
+> & {
+  tools?: string[]
 }
 
 export type AgentActionItem = {
@@ -125,7 +137,7 @@ export async function createAgent(input: CreateAgentInput): Promise<AgentDto> {
 
 export async function updateAgent(
   id: string,
-  patch: Partial<Omit<AgentDto, 'id' | 'createdAt' | 'updatedAt'>>
+  patch: UpdateAgentInput
 ): Promise<AgentDto> {
   return api<AgentDto>(`/api/agents/${encodeURIComponent(id)}`, {
     method: 'PATCH',

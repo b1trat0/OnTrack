@@ -48,6 +48,7 @@ function timeAgo(date: string | null | undefined): string {
 
 export function AgentsPage() {
   const agents = useAgentsStore((state) => state.agents)
+  const templates = useAgentsStore((state) => state.templates)
   const loadStatus = useAgentsStore((state) => state.loadStatus)
   const templatesLoadStatus = useAgentsStore((state) => state.templatesLoadStatus)
   const ensureLoaded = useAgentsStore((state) => state.ensureLoaded)
@@ -228,7 +229,7 @@ export function AgentsPage() {
                   Skip — start from scratch
                 </Button>
               </div>
-              <TemplateGallery onSelect={handleUseTemplate} />
+              <TemplateGallery templates={templates} onSelect={handleUseTemplate} />
             </>
           ) : agents.length === 0 ? null : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

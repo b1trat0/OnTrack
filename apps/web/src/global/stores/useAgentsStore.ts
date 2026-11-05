@@ -16,6 +16,7 @@ import {
   type OutputType,
   type RunOutputRecord,
   type RunResultDto,
+  type UpdateAgentInput,
 } from '../repositories/agents.repository'
 
 export type { OutputDestination } from '../repositories/agents.repository'
@@ -101,7 +102,7 @@ type AgentsStore = {
   ensureLoaded: () => Promise<void>
   ensureTemplatesLoaded: () => Promise<void>
   createAgent: (input: CreateAgentInput) => Promise<void>
-  updateAgent: (id: string, patch: Partial<Agent>) => Promise<void>
+  updateAgent: (id: string, patch: UpdateAgentInput) => Promise<void>
   deleteAgent: (id: string) => Promise<void>
   runAgent: (id: string) => Promise<RunResult>
   setRunningAgent: (id: string | null) => void
@@ -217,14 +218,20 @@ export const useAgentsStore = create<AgentsStore>()(
           preferences: input.preferences ?? [],
           sources: input.sources ?? [],
           output: input.output ?? ['message'],
-          draftOnly: input.draftOnly ?? false,
+          draftOnly: input.draftOnly ?? true,
           modelKeyId: input.modelKeyId ?? null,
-          maxTokens: input.maxTokens ?? 4096,
+          maxTokens: input.maxTokens ?? 2000,
           lastRunAt: null,
           runCount: 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          tools: [],
+          tools: (input.tools ?? []).map((toolName) => ({
+            id: '',
+            agentId: '',
+            toolName,
+            enabled: true,
+            config: null,
+          })),
         }
         set((state) => ({
           agents: [...state.agents, optimistic],
@@ -245,8 +252,27 @@ export const useAgentsStore = create<AgentsStore>()(
       },
 
       updateAgent: async (id, patch) => {
+        const { tools, ...agentPatch } = patch
         set((state) => ({
-          agents: state.agents.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+          agents: state.agents.map((agent) => {
+            if (agent.id !== id) return agent
+            const next: Agent = { ...agent, ...agentPatch }
+            if (tools !== undefined) {
+              next.tools = tools.map((toolName) => {
+                const existing = agent.tools?.find((tool) => tool.toolName === toolName)
+                return existing
+                  ? { ...existing, enabled: true }
+                  : {
+                      id: '',
+                      agentId: id,
+                      toolName,
+                      enabled: true,
+                      config: null,
+                    }
+              })
+            }
+            return next
+          }),
           epoch: state.epoch + 1,
         }))
         try {

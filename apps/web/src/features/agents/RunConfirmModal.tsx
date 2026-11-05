@@ -21,9 +21,9 @@ const KIND_META: Record<
   AgentActionItem['kind'],
   { label: string; icon: typeof ListTodo; color: string }
 > = {
-  task: { label: 'Task', icon: ListTodo, color: '#f59e0b' },
-  event: { label: 'Event', icon: CalendarDays, color: '#8b5cf6' },
-  note: { label: 'Note', icon: NotebookPen, color: '#0ea5e9' },
+  task: { label: 'Task · Notes', icon: ListTodo, color: '#f59e0b' },
+  event: { label: 'Event · Calendar', icon: CalendarDays, color: '#8b5cf6' },
+  note: { label: 'Note · Diary', icon: NotebookPen, color: '#0ea5e9' },
 }
 
 function metaLine(item: AgentActionItem): string {
@@ -65,7 +65,7 @@ export function RunConfirmModal({ open, agentName, items, onCancel, onDone }: Ru
       const response = await confirmActionItems(selectedItems)
       useToastStore.getState().push({
         title: `${response.created.length} items added`,
-        message: 'Calendar, tasks, and notes now reflect your changes.',
+        message: 'Tasks are on the Notes board, events in Calendar, and notes in Diary.',
         level: 'info',
       })
       // These stores short-circuit on loadStatus === 'loaded', so reset first or

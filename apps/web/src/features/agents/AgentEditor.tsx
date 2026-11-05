@@ -42,6 +42,23 @@ const PREFERENCE_SUGGESTIONS = [
 
 const ROLES = ['Coach', 'Reminder', 'Tracker', 'Listener', 'Nagger', 'Summarizer', 'Curator', 'Planner']
 
+/** Server template icons are display names; map them to the editor's keys. */
+const TEMPLATE_ICON_KEYS: Record<string, AgentIconKey> = {
+  mail: 'mail',
+  briefcase: 'puzzle',
+  newspaper: 'newspaper',
+  sparkles: 'sparkles',
+  bell: 'bell',
+  search: 'search',
+  calendar: 'clock',
+}
+
+function initialIconFor(initial: Agent | null, template: AgentTemplate | null): AgentIconKey {
+  if (initial?.icon && initial.icon in AGENT_ICONS) return initial.icon as AgentIconKey
+  if (template) return TEMPLATE_ICON_KEYS[template.icon.toLowerCase()] ?? 'brain'
+  return 'brain'
+}
+
 export function AgentEditor({ open, initial, template, onClose, onSave }: AgentEditorProps) {
   const createAgent = useAgentsStore((state) => state.createAgent)
   const updateAgent = useAgentsStore((state) => state.updateAgent)
@@ -50,17 +67,21 @@ export function AgentEditor({ open, initial, template, onClose, onSave }: AgentE
 
   const [name, setName] = useState(initial?.name ?? template?.name ?? '')
   const [role, setRole] = useState(initial?.role ?? template?.defaultRole ?? 'Coach')
-  const [icon, setIcon] = useState<AgentIconKey>((initial?.icon as AgentIconKey) ?? (template?.icon as AgentIconKey) ?? 'brain')
+  const [icon, setIcon] = useState<AgentIconKey>(() => initialIconFor(initial, template))
   const [color, setColor] = useState(initial?.color ?? AGENT_COLORS[0])
   const [description, setDescription] = useState(
     initial?.description ?? template?.defaultPrompt ?? template?.description ?? ''
   )
   const [preferences, setPreferences] = useState<string[]>(initial?.preferences ?? [])
 
-  const [enabledTools, setEnabledTools] = useState<string[]>(initial?.tools?.map((t) => t.toolName) ?? template?.defaultTools ?? [])
+  const [enabledTools, setEnabledTools] = useState<string[]>(
+    initial?.tools?.filter((tool) => tool.enabled).map((tool) => tool.toolName) ??
+      template?.defaultTools ??
+      []
+  )
   const [modelKeyId, setModelKeyId] = useState<string>(initial?.modelKeyId ?? '')
   const [maxTokens, setMaxTokens] = useState(initial?.maxTokens ?? 2000)
-  const [draftOnly, setDraftOnly] = useState(initial?.draftOnly ?? false)
+  const [draftOnly, setDraftOnly] = useState(initial?.draftOnly ?? true)
   const [output, setOutput] = useState<OutputType[]>(
     initial?.output ?? template?.defaultOutput ?? ['message']
   )
@@ -140,13 +161,7 @@ export function AgentEditor({ open, initial, template, onClose, onSave }: AgentE
         color,
         description: description.trim(),
         preferences,
-        tools: enabledTools.map((toolName) => ({
-          id: '',
-          agentId: initial.id,
-          toolName,
-          enabled: true,
-          config: null,
-        })),
+        tools: enabledTools,
         modelKeyId: modelKeyId || null,
         maxTokens,
         draftOnly,
@@ -167,6 +182,7 @@ export function AgentEditor({ open, initial, template, onClose, onSave }: AgentE
         modelKeyId: modelKeyId || undefined,
         maxTokens,
         templateId: template?.id,
+        tools: enabledTools,
       })
       pushToast({ title: `${name.trim()} created`, level: 'info' })
     }
@@ -387,7 +403,9 @@ export function AgentEditor({ open, initial, template, onClose, onSave }: AgentE
               <label className="flex items-center justify-between rounded-xl bg-(--surface-2) px-3 py-2.5">
                 <div>
                   <p className="text-sm font-medium">Draft mode only</p>
-                  <p className="text-[11px] text-(--text-muted)">Agent proposes actions but never executes them</p>
+                  <p className="text-[11px] text-(--text-muted)">
+                    Writes only to the Inbox. Notes, tasks, and calendar events wait for your approval.
+                  </p>
                 </div>
                 <button
                   onClick={() => setDraftOnly(!draftOnly)}
