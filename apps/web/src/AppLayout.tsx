@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Home, StickyNote, Bot, BookOpen, Timer, CalendarDays, LayoutDashboard, Sparkles } from 'lucide-react'
+import { Home, StickyNote, Bot, BookOpen, Timer, CalendarDays, LayoutDashboard, Sparkles, Settings } from 'lucide-react'
 import { Navbar } from './global/layout/Navbar'
 import { ToastHost } from './global/ui/ToastHost'
+import { CommandPalette } from './features/search/CommandPalette'
+import { OnboardingModal } from './features/onboarding/OnboardingModal'
+import { useUserStore } from './global/stores/useUserStore'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -12,21 +15,51 @@ const NAV_ITEMS = [
   { to: '/diary', label: 'Diary', icon: BookOpen },
   { to: '/timer', label: 'Timer', icon: Timer },
   { to: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ] as const
 
 export function AppLayout() {
   const location = useLocation()
   const [navOpen, setNavOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const user = useUserStore((state) => state.user)
 
   useEffect(() => {
     setNavOpen(false)
   }, [location.pathname])
 
+  useEffect(() => {
+    if (!user) return
+    const key = `ontrack-onboarding:${user.id}`
+    if (!localStorage.getItem(key)) setOnboardingOpen(true)
+  }, [user])
+
+  const closeOnboarding = () => {
+    if (user) localStorage.setItem(`ontrack-onboarding:${user.id}`, '1')
+    setOnboardingOpen(false)
+  }
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setSearchOpen((value) => !value)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const closeNav = () => setNavOpen(false)
 
   return (
     <div className="flex min-h-screen flex-col bg-(--bg) text-(--text)">
-      <Navbar menuOpen={navOpen} onToggleMenu={() => setNavOpen((value) => !value)} />
+      <Navbar
+        menuOpen={navOpen}
+        onToggleMenu={() => setNavOpen((value) => !value)}
+        onOpenSearch={() => setSearchOpen(true)}
+      />
       <div className="flex flex-1 flex-col md:flex-row">
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-52 shrink-0 flex-col gap-1 overflow-y-auto border-r border-(--border) bg-(--surface) p-4 scroll-thin md:flex lg:w-60">
           <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-widest text-(--text-muted)">
@@ -75,7 +108,7 @@ export function AppLayout() {
             className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col gap-1 overflow-y-auto border-r border-(--border) bg-(--surface) p-4 shadow-2xl scroll-thin md:hidden"
           >
             <div className="flex items-center gap-2.5 px-2 pb-4">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-(--accent) text-white shadow-sm">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-(--accent) text-(--on-accent) shadow-sm">
                 <Sparkles size={18} />
               </span>
               <span className="text-lg font-bold tracking-tight">OnTrack</span>
@@ -106,6 +139,8 @@ export function AppLayout() {
       ) : null}
 
       <ToastHost />
+      <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <OnboardingModal open={onboardingOpen} onClose={closeOnboarding} />
     </div>
   )
 }
