@@ -35,7 +35,8 @@ const buildPreload = () => {
       build: {
         ...getBuildConfig('dist/preload'),
         lib: {
-          fileName: () => '[name].mjs',
+          fileName: () => '[name].cjs',
+          formats: ['cjs'],
         },
       },
       plugins: [reloadElectronPlugin],

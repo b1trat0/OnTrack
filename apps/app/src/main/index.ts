@@ -41,7 +41,7 @@ const getUrl = (): string => {
 
 const getPreload = (): string =>
   fileURLToPath(
-    new URL(/* @vite-ignore */ '../preload/index.mjs', import.meta.url)
+    new URL(/* @vite-ignore */ '../preload/index.cjs', import.meta.url)
   )
 
 let mainWindow: BrowserWindow | null = null
@@ -59,7 +59,10 @@ const createMainWindow = () => {
     minHeight: 480,
     backgroundColor: '#f6f1e7',
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
       preload: getPreload(),
     },
   })
@@ -101,7 +104,10 @@ const createDashboardWindow = () => {
     show: false,
     backgroundColor: '#f6f1e7',
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
       preload: getPreload(),
     },
   })
