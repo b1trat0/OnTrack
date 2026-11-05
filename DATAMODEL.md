@@ -66,6 +66,7 @@ Front source: `apps/web/src/global/stores/useUserStore.ts` — `AppUser` (define
 | `email`          | string               | unique, normalized lowercase                    |
 | `name`           | string               |                                                |
 | `emailVerified`  | boolean              | must be `true` to sign in                       |
+| `avatarUrl`      | string \| null       | profile image URL; written by `PATCH /api/auth/me` |
 | `createdAt`      | datetime             | ISO on the wire                                |
 
 Server-side only (never returned): `passwordHash` (bcrypt, 12 rounds),
@@ -111,6 +112,8 @@ Front source: `apps/web/src/global/stores/useCalendarStore.ts` — `Appointment`
 | `endTime`   | `string \| null`            | `HH:mm` or `null`                               |
 | `color`     | string (hex)                | defaults `#8b5cf6`; calendar tasks use a fixed `#f59e0b` |
 | `notes`     | string                      | defaults `""`                                   |
+| `createdAt` | datetime                    | audit timestamp                                 |
+| `updatedAt` | datetime                    | audit timestamp                                 |
 
 **Entity separation (enforced 2026-09):** Notes tasks (`ontrack-notes` → `Task`) and Calendar
 entries (`ontrack-calendar` → `Appointment`) are **two distinct entities that never mix.** The
@@ -166,11 +169,21 @@ Front sources:
 
 **Execution model (v2):** button-triggered only, no cron/streaming. `POST /api/agents/:id/run`
 compiles one full `RunResult` and returns it in a single response. Budget guards: max 50
-runs/day/user (429), in-flight concurrency lock per agent (409), per-run `maxTokens` clamped to
-8000 server-side. All external content is wrapped in `<untrusted_data>` tags before hitting the
-LLM; output JSON is validated by Zod. `draftOnly=true` is the default on every agent. The runner
-composes the system prompt from the agent's Markdown `description` (the `prompt` column is no
-longer used).
+runs/day/user computed in the request's Cloudflare timezone (`cf-timezone`, UTC fallback), a
+500,000-token monthly per-user cap (`BUDGET_EXCEEDED` 429), and a **database-backed** in-flight
+lock per agent (`AgentRun.lockKey`, unique; 409 on a concurrent run; stale locks older than
+15 minutes are reclaimed). Per-run `maxTokens` is clamped to 8000 server-side. All external
+content is wrapped in `<untrusted_data>` tags before hitting the LLM; output JSON is validated
+by Zod. `draftOnly=true` is the default on every agent. The runner composes the system prompt
+from the agent's Markdown `description` (the `prompt` column is no longer used).
+
+**Draft mode (enforced):** when `draftOnly=true`, the runner writes the run result to the
+**inbox only**. A configured `notes` or `calendar` destination becomes a proposal in
+`pendingActions` instead of a write; nothing touches the Notes board, Calendar, or Diary until
+the user approves it. When `draftOnly=false`, configured destinations are written directly and
+the approval dialog only carries machine-line items the destination did not already materialise.
+Tool permissions are persisted through the agent create/update payload (`tools: string[]`) and
+validated against the 14-name registry; the editor no longer sends a list the API silently drops.
 
 **Default agents (v2.1):** 3 pre-built agents are seeded per user — adherent **Email Summarizer**
 (`email_read`/`classify`/`calendar_write`/`note_write`/`task_move`), **Job Finder**
@@ -223,8 +236,9 @@ and deletes the row (`DELETE /api/auth/gmail/disconnect`).
 die between workerd isolate activations and the pool doesn't notice (the next query hangs with
 "The Workers runtime canceled this request because ... hung"). Parameters: `max: 1`,
 `connectionTimeoutMillis: 3000`, `idleTimeoutMillis: 500` (idle sockets self-close, so nothing
-leaks). Cost is one TCP+handshake per request (~10-30 ms local); revisit with Hyperdrive for
-production.
+leaks). Cost is one TCP+handshake per request (~10-30 ms local). `databaseUrl(env)` prefers a
+bound `HYPERDRIVE.connectionString` when present, so production can move to Hyperdrive without
+changing controllers; local dev and tests keep using `DATABASE_URL`.
 
 ```prisma
 generator client {
@@ -265,6 +279,27 @@ model EmailVerificationToken {
   token     String   @unique // opaque, one per user (upserted)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Subscription {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan               String   @default("free") // free | pro | teams | industry
+  status             String   @default("active")
+  provider           String?  // "stripe"
+  customerId         String?  @unique
+  subscriptionId     String?  @unique
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model BillingEvent {
+  id          String   @id // provider event id
+  type        String
+  processedAt DateTime @default(now())
 }
 
 model PasswordResetToken {
@@ -402,6 +437,7 @@ model AgentRun {
   userId     String
   agentId    String
   status     String   @default("running") // running | success | failed | skipped
+  lockKey    String?  @unique // agentId while running; null when finished
   inputSnap  String?
   outputSnap String?
   toolCalls  String?
@@ -456,14 +492,17 @@ model Reminder {
 }
 ```
 
-Email/PIN verification tokens are stored **plaintext** (`token`); the refresh token is stored
-as a **SHA-256 digest** (it is the long-lived credential, so it never sits in the DB readable).
+Verification, reset, and refresh tokens are stored as **SHA-256 digests**; only the raw token
+in the email link/response can be used. A database leak therefore does not yield a usable
+verification or reset link.
 
 ---
 
 ## 4. REST API contract (Hono)
 
 - Base path prefix: `/api`. Auth routes under `/api/auth`, tasks under `/api/tasks`.
+- **Health:** `GET /health` returns `{ status: "ok", service, time }` without auth.
+- **Request IDs:** every `/api/*` response carries `X-Request-Id`; errors are logged as one-line JSON.
 - **Auth:** JWT `Authorization: Bearer <accessToken>` for `/api/tasks`. CORS is open (desktop app).
 - **Envelope:** success → `{ "data": T }` (mutations return the entity; deletes/void → `204`).
   Errors → `{ "error": { "code", "message" } }` with 4xx/5xx status.
@@ -481,7 +520,9 @@ as a **SHA-256 digest** (it is the long-lived credential, so it never sits in th
 | POST   | `/api/auth/refresh`            | `{ refreshToken }`                 | same shape; new refresh token; invalidates old |
 | POST   | `/api/auth/signout`            | — (auth)                           | `204`; revokes refresh token |
 | GET    | `/api/auth/me`                 | — (auth)                           | `{ data: user }`             |
-| PATCH  | `/api/auth/me`                 | `{ name?, avatarUrl? }` (auth)     | `{ data: user }` (avatar not in UI yet) |
+| PATCH  | `/api/auth/me`                 | `{ name?, avatarUrl? }` (auth)     | `{ data: user }`             |
+| DELETE | `/api/auth/me`                 | `{ password }` (auth)              | `204`; deletes the account and all related rows |
+| GET    | `/api/auth/export`             | — (auth)                           | `{ data: { exportedAt, user, tasks, appointments, diaryEntries, agents, agentMessages, modelKeys } }` |
 | PATCH  | `/api/auth/password`           | `{ currentPassword, newPassword }`(auth) | `204`; revokes session |
 | POST   | `/api/auth/forgot-password`    | `{ email }`                        | `{ data: { message } }` (always benign) |
 | POST   | `/api/auth/reset-password`     | `{ token, newPassword }`           | `204`                        |
@@ -541,14 +582,18 @@ Validation: `date` `YYYY-MM-DD`, `month` `YYYY-MM`, `mood` ∈ `great|good|okay|
 
 | Method | Path                    | Body / Query                 | Returns                                   |
 | ------ | ----------------------- | ---------------------------- | ----------------------------------------- |
-| GET    | `/api/agents`           | —                            | `{ data: Agent[] }` (tools included)      |
-| POST   | `/api/agents`           | `{ name, role, icon, color, description, preferences?, templateId?, prompt?, sources?, output?, draftOnly?, modelKeyId?, maxTokens? }` | `201 { data: Agent }` (template defaults + `AgentTool` rows applied when `templateId` set; `output` is a non-empty `OutputType[]`, defaulting to `['message']`) |
+| GET    | `/api/agents`           | —                            | `{ data: Agent[] }` (tools included); seeds defaults when the user has zero agents |
+| GET    | `/api/agents/usage`     | —                            | `{ data: { plan, dailyRuns, dailyRunLimit, monthlyTokens, monthlyTokenLimit, monthStart } }` |
+| POST   | `/api/agents`           | `{ name, role, icon, color, description, preferences?, templateId?, prompt?, sources?, output?, draftOnly?, modelKeyId?, maxTokens?, tools? }` | `201 { data: Agent }` (template defaults + `AgentTool` rows applied when `templateId` set; `tools` is the enabled registry-name set and wins over template defaults) |
 | GET    | `/api/agents/:id`       | —                            | `{ data: Agent }`                         |
 | PATCH  | `/api/agents/:id`       | any subset of the above      | `{ data: Agent }` (at least one field)    |
 | DELETE | `/api/agents/:id`       | —                            | `204` (cascades runs/messages/tools)      |
 | POST   | `/api/agents/:id/run`   | —                            | `{ data: RunResult }`; `404`, `409 CONFLICT` (in-flight), `429 RATE_LIMIT` |
 | GET    | `/api/agents/:id/runs`  | `?limit&offset`              | `{ data: { runs: RunListItem[], hasMore } }` |
-| POST   | `/api/agents/actions`   | `{ items: ActionItem[] }`    | `{ data: { created: { kind, id }[] } }` — creates `Appointment` (`task` → `kind:'task'`, `event` → `kind:'appointment'`) and `DiaryEntry` (`note`, tagged `agent-output`); triggered only after the user approves proposed items in the UI, and the runner only ever proposes items whose surface the agent delivers to (see "Output destinations") |
+
+| POST   | `/api/agents/actions`   | `{ items: ActionItem[] }`    | `{ data: { created: { kind, id }[] } }` — creates a `Task` on the Notes board (`task`), an `Appointment` (`event` → `kind:'appointment'`), and a `DiaryEntry` (`note`, tagged `agent-output`); triggered only after the user approves proposed items in the UI |
+
+
 
 ```ts
 type ActionItem = {
@@ -635,7 +680,7 @@ creation falls back to `['message']` rather than storing a set that discards eve
 | GET    | `/api/tools/available`            | —                              | `{ data: ToolDefinition[] }` (14 tools, grouped by category) |
 | GET    | `/api/tools/agents/:id/tools`     | —                              | `{ data: AgentTool[] }`                   |
 | PATCH  | `/api/tools/agents/:id/tools/:toolName` | `{ enabled?, config? }`   | `{ data: AgentTool }` (upsert)            |
-| GET    | `/api/agents/messages`            | `?offset&limit&unread=`        | `{ data: { messages, hasMore } }`         |
+| GET    | `/api/agents/messages`            | `?offset&limit&unread=`        | `{ data: { messages, hasMore, unreadCount } }` |
 | PATCH  | `/api/agents/messages/:id`        | `{ read: true }`               | `{ data: AgentMessage }`                  |
 | DELETE | `/api/agents/messages/:id`        | —                              | `204`                                     |
 | GET    | `/api/runs/:runId`                | —                              | `{ data: RunListItem }`                   |
@@ -647,6 +692,20 @@ creation falls back to `['message']` rather than storing a set that discards eve
 | GET    | `/api/model-keys`   | —                               | `{ data: ModelKey[] }` — redacted (no key)    |
 | POST   | `/api/model-keys`   | `{ provider, label, apiKey, defaultModel, baseUrl? }` | `201 { data: ModelKey }` — **live-validated** against the provider before storing |
 | DELETE | `/api/model-keys/:id` | —                            | `204`; clears `Agent.modelKeyId` references    |
+
+### Billing (Stripe, optional)
+
+| Method | Path                    | Body / Query           | Returns |
+| ------ | ----------------------- | ---------------------- | ------- |
+| GET    | `/api/billing/plans`    | — (public)             | `{ data: Plan[] }` — free, pro, teams, industry; `checkoutAvailable` reflects env |
+| GET    | `/api/billing/status`   | — (auth)               | `{ data: { plan, status, currentPeriodEnd, cancelAtPeriodEnd, configured } }` |
+| POST   | `/api/billing/checkout` | `{ interval: "monthly"\|"yearly" }` (auth) | `{ data: { url } }` — Stripe Checkout |
+| POST   | `/api/billing/portal`   | — (auth)               | `{ data: { url } }` — Stripe customer portal |
+| POST   | `/api/billing/webhook`  | raw Stripe event       | `{ data: { received: true } }`; signature verified, events deduped by id |
+
+Plan limits live in `apps/backend/src/services/entitlements.service.ts`: free 50 runs/day +
+500k tokens/month; pro 200 + 2M; teams 500 + 5M; industry 1000 + 20M. A canceled/incomplete
+subscription falls back to free without deleting the row.
 
 ### Gmail OAuth (implemented, requires live credentials)
 
@@ -704,7 +763,11 @@ with no mail in it.
   `wrangler dev` `.dev.vars` secret (and a Worker secret at deploy).
 - Migrations: applied via `prisma migrate deploy` (local Docker Postgres `ontrack-pg`).
   `prisma migrate dev` is non-interactive-unfriendly; hand-written migrations + `migrate deploy`
-  when needed.
+  when needed. `20261105090000_saas_hardening_p0` is **additive only**: it adds
+  `User.avatarUrl`, the `Agent(userId)` index, and `Appointment.createdAt/updatedAt`.
+  `20261105100000_agent_run_lock` adds `AgentRun.lockKey` plus its unique index for the
+  cross-isolate run lock. `20261105120000_stripe_billing` adds `Subscription` and
+  `BillingEvent` (additive).
 - Env bindings in `wrangler.jsonc`: `WEB_URL` (var), plus secrets in `.dev.vars`:
   `DATABASE_URL`, `JWT_SECRET`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`,
   `MODEL_KEY_ENCRYPTION_KEY`, `INTEGRATION_ENCRYPTION_KEY`, `GOOGLE_CLIENT_ID`,

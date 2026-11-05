@@ -84,7 +84,7 @@ test('callback validates state against the CSRF cookie and never logs the code',
 test('controller follows repo conventions: no any, uses handle()', () => {
   assert.ok(!/\bany\b/.test(controllerSource), 'controller must not use any')
   assert.match(controllerSource, /handle\(c, async \(\) => \{/)
-  assert.match(controllerSource, /prismaClient\(c\.env\.DATABASE_URL\)/)
+  assert.match(controllerSource, /prismaClient\(c\.env\)/)
 })
 
 test('the nonce cookie is httpOnly, Lax-scoped and cleared after use', () => {

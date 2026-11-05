@@ -9,6 +9,9 @@
   "vars": {
     "WEB_URL": "http://localhost:3456"
   }
+  // Hyperdrive (production): create a config in Cloudflare, then add
+  // "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<config-id>" }]
+  // The API prefers HYPERDRIVE.connectionString when bound.
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

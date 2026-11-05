@@ -30,6 +30,7 @@ export type UserMinAggregateOutputType = {
   name: string | null
   passwordHash: string | null
   emailVerified: boolean | null
+  avatarUrl: string | null
   refreshTokenDigest: string | null
   refreshTokenExpiresAt: Date | null
   createdAt: Date | null
@@ -42,6 +43,7 @@ export type UserMaxAggregateOutputType = {
   name: string | null
   passwordHash: string | null
   emailVerified: boolean | null
+  avatarUrl: string | null
   refreshTokenDigest: string | null
   refreshTokenExpiresAt: Date | null
   createdAt: Date | null
@@ -54,6 +56,7 @@ export type UserCountAggregateOutputType = {
   name: number
   passwordHash: number
   emailVerified: number
+  avatarUrl: number
   refreshTokenDigest: number
   refreshTokenExpiresAt: number
   createdAt: number
@@ -68,6 +71,7 @@ export type UserMinAggregateInputType = {
   name?: true
   passwordHash?: true
   emailVerified?: true
+  avatarUrl?: true
   refreshTokenDigest?: true
   refreshTokenExpiresAt?: true
   createdAt?: true
@@ -80,6 +84,7 @@ export type UserMaxAggregateInputType = {
   name?: true
   passwordHash?: true
   emailVerified?: true
+  avatarUrl?: true
   refreshTokenDigest?: true
   refreshTokenExpiresAt?: true
   createdAt?: true
@@ -92,6 +97,7 @@ export type UserCountAggregateInputType = {
   name?: true
   passwordHash?: true
   emailVerified?: true
+  avatarUrl?: true
   refreshTokenDigest?: true
   refreshTokenExpiresAt?: true
   createdAt?: true
@@ -177,6 +183,7 @@ export type UserGroupByOutputType = {
   name: string
   passwordHash: string
   emailVerified: boolean
+  avatarUrl: string | null
   refreshTokenDigest: string | null
   refreshTokenExpiresAt: Date | null
   createdAt: Date
@@ -210,6 +217,7 @@ export type UserWhereInput = {
   name?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   emailVerified?: Prisma.BoolFilter<"User"> | boolean
+  avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   refreshTokenDigest?: Prisma.StringNullableFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -226,6 +234,7 @@ export type UserWhereInput = {
   reminders?: Prisma.ReminderListRelationFilter
   verificationToken?: Prisma.XOR<Prisma.EmailVerificationTokenNullableScalarRelationFilter, Prisma.EmailVerificationTokenWhereInput> | null
   resetToken?: Prisma.XOR<Prisma.PasswordResetTokenNullableScalarRelationFilter, Prisma.PasswordResetTokenWhereInput> | null
+  subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
 }
 
 export type UserOrderByWithRelationInput = {
@@ -234,6 +243,7 @@ export type UserOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenDigest?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -250,6 +260,7 @@ export type UserOrderByWithRelationInput = {
   reminders?: Prisma.ReminderOrderByRelationAggregateInput
   verificationToken?: Prisma.EmailVerificationTokenOrderByWithRelationInput
   resetToken?: Prisma.PasswordResetTokenOrderByWithRelationInput
+  subscription?: Prisma.SubscriptionOrderByWithRelationInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -262,6 +273,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   emailVerified?: Prisma.BoolFilter<"User"> | boolean
+  avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -277,6 +289,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   reminders?: Prisma.ReminderListRelationFilter
   verificationToken?: Prisma.XOR<Prisma.EmailVerificationTokenNullableScalarRelationFilter, Prisma.EmailVerificationTokenWhereInput> | null
   resetToken?: Prisma.XOR<Prisma.PasswordResetTokenNullableScalarRelationFilter, Prisma.PasswordResetTokenWhereInput> | null
+  subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
 }, "id" | "email" | "refreshTokenDigest">
 
 export type UserOrderByWithAggregationInput = {
@@ -285,6 +298,7 @@ export type UserOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenDigest?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -303,6 +317,7 @@ export type UserScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   emailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   refreshTokenDigest?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -315,6 +330,7 @@ export type UserCreateInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -331,6 +347,7 @@ export type UserCreateInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -339,6 +356,7 @@ export type UserUncheckedCreateInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -355,6 +373,7 @@ export type UserUncheckedCreateInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -363,6 +382,7 @@ export type UserUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -379,6 +399,7 @@ export type UserUpdateInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -387,6 +408,7 @@ export type UserUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -403,6 +425,7 @@ export type UserUncheckedUpdateInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -411,6 +434,7 @@ export type UserCreateManyInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -423,6 +447,7 @@ export type UserUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -435,6 +460,7 @@ export type UserUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -447,6 +473,7 @@ export type UserCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
   refreshTokenDigest?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -459,6 +486,7 @@ export type UserMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
   refreshTokenDigest?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -471,6 +499,7 @@ export type UserMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
   refreshTokenDigest?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -500,6 +529,20 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserCreateNestedOneWithoutSubscriptionInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSubscriptionInput, Prisma.UserUncheckedCreateWithoutSubscriptionInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSubscriptionInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutSubscriptionNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutSubscriptionInput, Prisma.UserUncheckedCreateWithoutSubscriptionInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutSubscriptionInput
+  upsert?: Prisma.UserUpsertWithoutSubscriptionInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSubscriptionInput, Prisma.UserUpdateWithoutSubscriptionInput>, Prisma.UserUncheckedUpdateWithoutSubscriptionInput>
 }
 
 export type UserCreateNestedOneWithoutVerificationTokenInput = {
@@ -670,12 +713,129 @@ export type UserUpdateOneRequiredWithoutRemindersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRemindersInput, Prisma.UserUpdateWithoutRemindersInput>, Prisma.UserUncheckedUpdateWithoutRemindersInput>
 }
 
+export type UserCreateWithoutSubscriptionInput = {
+  id?: string
+  email: string
+  name: string
+  passwordHash: string
+  emailVerified?: boolean
+  avatarUrl?: string | null
+  refreshTokenDigest?: string | null
+  refreshTokenExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tasks?: Prisma.TaskCreateNestedManyWithoutUserInput
+  appointments?: Prisma.AppointmentCreateNestedManyWithoutUserInput
+  diaryEntries?: Prisma.DiaryEntryCreateNestedManyWithoutUserInput
+  agents?: Prisma.AgentCreateNestedManyWithoutUserInput
+  agentRuns?: Prisma.AgentRunCreateNestedManyWithoutUserInput
+  agentMessages?: Prisma.AgentMessageCreateNestedManyWithoutUserInput
+  modelKeys?: Prisma.ModelKeyCreateNestedManyWithoutUserInput
+  integrationAccounts?: Prisma.IntegrationAccountCreateNestedManyWithoutUserInput
+  timerSettings?: Prisma.TimerSettingsCreateNestedOneWithoutUserInput
+  reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
+  verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
+  resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutSubscriptionInput = {
+  id?: string
+  email: string
+  name: string
+  passwordHash: string
+  emailVerified?: boolean
+  avatarUrl?: string | null
+  refreshTokenDigest?: string | null
+  refreshTokenExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutUserInput
+  appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutUserInput
+  diaryEntries?: Prisma.DiaryEntryUncheckedCreateNestedManyWithoutUserInput
+  agents?: Prisma.AgentUncheckedCreateNestedManyWithoutUserInput
+  agentRuns?: Prisma.AgentRunUncheckedCreateNestedManyWithoutUserInput
+  agentMessages?: Prisma.AgentMessageUncheckedCreateNestedManyWithoutUserInput
+  modelKeys?: Prisma.ModelKeyUncheckedCreateNestedManyWithoutUserInput
+  integrationAccounts?: Prisma.IntegrationAccountUncheckedCreateNestedManyWithoutUserInput
+  timerSettings?: Prisma.TimerSettingsUncheckedCreateNestedOneWithoutUserInput
+  reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
+  verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
+  resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutSubscriptionInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutSubscriptionInput, Prisma.UserUncheckedCreateWithoutSubscriptionInput>
+}
+
+export type UserUpsertWithoutSubscriptionInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutSubscriptionInput, Prisma.UserUncheckedUpdateWithoutSubscriptionInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutSubscriptionInput, Prisma.UserUncheckedCreateWithoutSubscriptionInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutSubscriptionInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutSubscriptionInput, Prisma.UserUncheckedUpdateWithoutSubscriptionInput>
+}
+
+export type UserUpdateWithoutSubscriptionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.TaskUpdateManyWithoutUserNestedInput
+  appointments?: Prisma.AppointmentUpdateManyWithoutUserNestedInput
+  diaryEntries?: Prisma.DiaryEntryUpdateManyWithoutUserNestedInput
+  agents?: Prisma.AgentUpdateManyWithoutUserNestedInput
+  agentRuns?: Prisma.AgentRunUpdateManyWithoutUserNestedInput
+  agentMessages?: Prisma.AgentMessageUpdateManyWithoutUserNestedInput
+  modelKeys?: Prisma.ModelKeyUpdateManyWithoutUserNestedInput
+  integrationAccounts?: Prisma.IntegrationAccountUpdateManyWithoutUserNestedInput
+  timerSettings?: Prisma.TimerSettingsUpdateOneWithoutUserNestedInput
+  reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
+  verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
+  resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutSubscriptionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tasks?: Prisma.TaskUncheckedUpdateManyWithoutUserNestedInput
+  appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutUserNestedInput
+  diaryEntries?: Prisma.DiaryEntryUncheckedUpdateManyWithoutUserNestedInput
+  agents?: Prisma.AgentUncheckedUpdateManyWithoutUserNestedInput
+  agentRuns?: Prisma.AgentRunUncheckedUpdateManyWithoutUserNestedInput
+  agentMessages?: Prisma.AgentMessageUncheckedUpdateManyWithoutUserNestedInput
+  modelKeys?: Prisma.ModelKeyUncheckedUpdateManyWithoutUserNestedInput
+  integrationAccounts?: Prisma.IntegrationAccountUncheckedUpdateManyWithoutUserNestedInput
+  timerSettings?: Prisma.TimerSettingsUncheckedUpdateOneWithoutUserNestedInput
+  reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
+  verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
+  resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+}
+
 export type UserCreateWithoutVerificationTokenInput = {
   id?: string
   email: string
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -691,6 +851,7 @@ export type UserCreateWithoutVerificationTokenInput = {
   timerSettings?: Prisma.TimerSettingsCreateNestedOneWithoutUserInput
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutVerificationTokenInput = {
@@ -699,6 +860,7 @@ export type UserUncheckedCreateWithoutVerificationTokenInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -714,6 +876,7 @@ export type UserUncheckedCreateWithoutVerificationTokenInput = {
   timerSettings?: Prisma.TimerSettingsUncheckedCreateNestedOneWithoutUserInput
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutVerificationTokenInput = {
@@ -738,6 +901,7 @@ export type UserUpdateWithoutVerificationTokenInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -753,6 +917,7 @@ export type UserUpdateWithoutVerificationTokenInput = {
   timerSettings?: Prisma.TimerSettingsUpdateOneWithoutUserNestedInput
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutVerificationTokenInput = {
@@ -761,6 +926,7 @@ export type UserUncheckedUpdateWithoutVerificationTokenInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -776,6 +942,7 @@ export type UserUncheckedUpdateWithoutVerificationTokenInput = {
   timerSettings?: Prisma.TimerSettingsUncheckedUpdateOneWithoutUserNestedInput
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutResetTokenInput = {
@@ -784,6 +951,7 @@ export type UserCreateWithoutResetTokenInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -799,6 +967,7 @@ export type UserCreateWithoutResetTokenInput = {
   timerSettings?: Prisma.TimerSettingsCreateNestedOneWithoutUserInput
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutResetTokenInput = {
@@ -807,6 +976,7 @@ export type UserUncheckedCreateWithoutResetTokenInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -822,6 +992,7 @@ export type UserUncheckedCreateWithoutResetTokenInput = {
   timerSettings?: Prisma.TimerSettingsUncheckedCreateNestedOneWithoutUserInput
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutResetTokenInput = {
@@ -846,6 +1017,7 @@ export type UserUpdateWithoutResetTokenInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -861,6 +1033,7 @@ export type UserUpdateWithoutResetTokenInput = {
   timerSettings?: Prisma.TimerSettingsUpdateOneWithoutUserNestedInput
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutResetTokenInput = {
@@ -869,6 +1042,7 @@ export type UserUncheckedUpdateWithoutResetTokenInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -884,6 +1058,7 @@ export type UserUncheckedUpdateWithoutResetTokenInput = {
   timerSettings?: Prisma.TimerSettingsUncheckedUpdateOneWithoutUserNestedInput
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutTasksInput = {
@@ -892,6 +1067,7 @@ export type UserCreateWithoutTasksInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -907,6 +1083,7 @@ export type UserCreateWithoutTasksInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTasksInput = {
@@ -915,6 +1092,7 @@ export type UserUncheckedCreateWithoutTasksInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -930,6 +1108,7 @@ export type UserUncheckedCreateWithoutTasksInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTasksInput = {
@@ -954,6 +1133,7 @@ export type UserUpdateWithoutTasksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -969,6 +1149,7 @@ export type UserUpdateWithoutTasksInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTasksInput = {
@@ -977,6 +1158,7 @@ export type UserUncheckedUpdateWithoutTasksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -992,6 +1174,7 @@ export type UserUncheckedUpdateWithoutTasksInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAppointmentsInput = {
@@ -1000,6 +1183,7 @@ export type UserCreateWithoutAppointmentsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1015,6 +1199,7 @@ export type UserCreateWithoutAppointmentsInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAppointmentsInput = {
@@ -1023,6 +1208,7 @@ export type UserUncheckedCreateWithoutAppointmentsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1038,6 +1224,7 @@ export type UserUncheckedCreateWithoutAppointmentsInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAppointmentsInput = {
@@ -1062,6 +1249,7 @@ export type UserUpdateWithoutAppointmentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1077,6 +1265,7 @@ export type UserUpdateWithoutAppointmentsInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAppointmentsInput = {
@@ -1085,6 +1274,7 @@ export type UserUncheckedUpdateWithoutAppointmentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1100,6 +1290,7 @@ export type UserUncheckedUpdateWithoutAppointmentsInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutDiaryEntriesInput = {
@@ -1108,6 +1299,7 @@ export type UserCreateWithoutDiaryEntriesInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1123,6 +1315,7 @@ export type UserCreateWithoutDiaryEntriesInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutDiaryEntriesInput = {
@@ -1131,6 +1324,7 @@ export type UserUncheckedCreateWithoutDiaryEntriesInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1146,6 +1340,7 @@ export type UserUncheckedCreateWithoutDiaryEntriesInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutDiaryEntriesInput = {
@@ -1170,6 +1365,7 @@ export type UserUpdateWithoutDiaryEntriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1185,6 +1381,7 @@ export type UserUpdateWithoutDiaryEntriesInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDiaryEntriesInput = {
@@ -1193,6 +1390,7 @@ export type UserUncheckedUpdateWithoutDiaryEntriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1208,6 +1406,7 @@ export type UserUncheckedUpdateWithoutDiaryEntriesInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAgentsInput = {
@@ -1216,6 +1415,7 @@ export type UserCreateWithoutAgentsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1231,6 +1431,7 @@ export type UserCreateWithoutAgentsInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAgentsInput = {
@@ -1239,6 +1440,7 @@ export type UserUncheckedCreateWithoutAgentsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1254,6 +1456,7 @@ export type UserUncheckedCreateWithoutAgentsInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAgentsInput = {
@@ -1278,6 +1481,7 @@ export type UserUpdateWithoutAgentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1293,6 +1497,7 @@ export type UserUpdateWithoutAgentsInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAgentsInput = {
@@ -1301,6 +1506,7 @@ export type UserUncheckedUpdateWithoutAgentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1316,6 +1522,7 @@ export type UserUncheckedUpdateWithoutAgentsInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutModelKeysInput = {
@@ -1324,6 +1531,7 @@ export type UserCreateWithoutModelKeysInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1339,6 +1547,7 @@ export type UserCreateWithoutModelKeysInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutModelKeysInput = {
@@ -1347,6 +1556,7 @@ export type UserUncheckedCreateWithoutModelKeysInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1362,6 +1572,7 @@ export type UserUncheckedCreateWithoutModelKeysInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutModelKeysInput = {
@@ -1386,6 +1597,7 @@ export type UserUpdateWithoutModelKeysInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1401,6 +1613,7 @@ export type UserUpdateWithoutModelKeysInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutModelKeysInput = {
@@ -1409,6 +1622,7 @@ export type UserUncheckedUpdateWithoutModelKeysInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1424,6 +1638,7 @@ export type UserUncheckedUpdateWithoutModelKeysInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAgentRunsInput = {
@@ -1432,6 +1647,7 @@ export type UserCreateWithoutAgentRunsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1447,6 +1663,7 @@ export type UserCreateWithoutAgentRunsInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAgentRunsInput = {
@@ -1455,6 +1672,7 @@ export type UserUncheckedCreateWithoutAgentRunsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1470,6 +1688,7 @@ export type UserUncheckedCreateWithoutAgentRunsInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAgentRunsInput = {
@@ -1494,6 +1713,7 @@ export type UserUpdateWithoutAgentRunsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1509,6 +1729,7 @@ export type UserUpdateWithoutAgentRunsInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAgentRunsInput = {
@@ -1517,6 +1738,7 @@ export type UserUncheckedUpdateWithoutAgentRunsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1532,6 +1754,7 @@ export type UserUncheckedUpdateWithoutAgentRunsInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAgentMessagesInput = {
@@ -1540,6 +1763,7 @@ export type UserCreateWithoutAgentMessagesInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1555,6 +1779,7 @@ export type UserCreateWithoutAgentMessagesInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAgentMessagesInput = {
@@ -1563,6 +1788,7 @@ export type UserUncheckedCreateWithoutAgentMessagesInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1578,6 +1804,7 @@ export type UserUncheckedCreateWithoutAgentMessagesInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAgentMessagesInput = {
@@ -1602,6 +1829,7 @@ export type UserUpdateWithoutAgentMessagesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1617,6 +1845,7 @@ export type UserUpdateWithoutAgentMessagesInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAgentMessagesInput = {
@@ -1625,6 +1854,7 @@ export type UserUncheckedUpdateWithoutAgentMessagesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1640,6 +1870,7 @@ export type UserUncheckedUpdateWithoutAgentMessagesInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutIntegrationAccountsInput = {
@@ -1648,6 +1879,7 @@ export type UserCreateWithoutIntegrationAccountsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1663,6 +1895,7 @@ export type UserCreateWithoutIntegrationAccountsInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutIntegrationAccountsInput = {
@@ -1671,6 +1904,7 @@ export type UserUncheckedCreateWithoutIntegrationAccountsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1686,6 +1920,7 @@ export type UserUncheckedCreateWithoutIntegrationAccountsInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutIntegrationAccountsInput = {
@@ -1710,6 +1945,7 @@ export type UserUpdateWithoutIntegrationAccountsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1725,6 +1961,7 @@ export type UserUpdateWithoutIntegrationAccountsInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutIntegrationAccountsInput = {
@@ -1733,6 +1970,7 @@ export type UserUncheckedUpdateWithoutIntegrationAccountsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1748,6 +1986,7 @@ export type UserUncheckedUpdateWithoutIntegrationAccountsInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutTimerSettingsInput = {
@@ -1756,6 +1995,7 @@ export type UserCreateWithoutTimerSettingsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1771,6 +2011,7 @@ export type UserCreateWithoutTimerSettingsInput = {
   reminders?: Prisma.ReminderCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTimerSettingsInput = {
@@ -1779,6 +2020,7 @@ export type UserUncheckedCreateWithoutTimerSettingsInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1794,6 +2036,7 @@ export type UserUncheckedCreateWithoutTimerSettingsInput = {
   reminders?: Prisma.ReminderUncheckedCreateNestedManyWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTimerSettingsInput = {
@@ -1818,6 +2061,7 @@ export type UserUpdateWithoutTimerSettingsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1833,6 +2077,7 @@ export type UserUpdateWithoutTimerSettingsInput = {
   reminders?: Prisma.ReminderUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTimerSettingsInput = {
@@ -1841,6 +2086,7 @@ export type UserUncheckedUpdateWithoutTimerSettingsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1856,6 +2102,7 @@ export type UserUncheckedUpdateWithoutTimerSettingsInput = {
   reminders?: Prisma.ReminderUncheckedUpdateManyWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRemindersInput = {
@@ -1864,6 +2111,7 @@ export type UserCreateWithoutRemindersInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1879,6 +2127,7 @@ export type UserCreateWithoutRemindersInput = {
   timerSettings?: Prisma.TimerSettingsCreateNestedOneWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRemindersInput = {
@@ -1887,6 +2136,7 @@ export type UserUncheckedCreateWithoutRemindersInput = {
   name: string
   passwordHash: string
   emailVerified?: boolean
+  avatarUrl?: string | null
   refreshTokenDigest?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
@@ -1902,6 +2152,7 @@ export type UserUncheckedCreateWithoutRemindersInput = {
   timerSettings?: Prisma.TimerSettingsUncheckedCreateNestedOneWithoutUserInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedCreateNestedOneWithoutUserInput
   resetToken?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRemindersInput = {
@@ -1926,6 +2177,7 @@ export type UserUpdateWithoutRemindersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1941,6 +2193,7 @@ export type UserUpdateWithoutRemindersInput = {
   timerSettings?: Prisma.TimerSettingsUpdateOneWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRemindersInput = {
@@ -1949,6 +2202,7 @@ export type UserUncheckedUpdateWithoutRemindersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenDigest?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1964,6 +2218,7 @@ export type UserUncheckedUpdateWithoutRemindersInput = {
   timerSettings?: Prisma.TimerSettingsUncheckedUpdateOneWithoutUserNestedInput
   verificationToken?: Prisma.EmailVerificationTokenUncheckedUpdateOneWithoutUserNestedInput
   resetToken?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 
@@ -2075,6 +2330,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   name?: boolean
   passwordHash?: boolean
   emailVerified?: boolean
+  avatarUrl?: boolean
   refreshTokenDigest?: boolean
   refreshTokenExpiresAt?: boolean
   createdAt?: boolean
@@ -2091,6 +2347,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   reminders?: boolean | Prisma.User$remindersArgs<ExtArgs>
   verificationToken?: boolean | Prisma.User$verificationTokenArgs<ExtArgs>
   resetToken?: boolean | Prisma.User$resetTokenArgs<ExtArgs>
+  subscription?: boolean | Prisma.User$subscriptionArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -2100,6 +2357,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   passwordHash?: boolean
   emailVerified?: boolean
+  avatarUrl?: boolean
   refreshTokenDigest?: boolean
   refreshTokenExpiresAt?: boolean
   createdAt?: boolean
@@ -2112,6 +2370,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   name?: boolean
   passwordHash?: boolean
   emailVerified?: boolean
+  avatarUrl?: boolean
   refreshTokenDigest?: boolean
   refreshTokenExpiresAt?: boolean
   createdAt?: boolean
@@ -2124,13 +2383,14 @@ export type UserSelectScalar = {
   name?: boolean
   passwordHash?: boolean
   emailVerified?: boolean
+  avatarUrl?: boolean
   refreshTokenDigest?: boolean
   refreshTokenExpiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "passwordHash" | "emailVerified" | "refreshTokenDigest" | "refreshTokenExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "passwordHash" | "emailVerified" | "avatarUrl" | "refreshTokenDigest" | "refreshTokenExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tasks?: boolean | Prisma.User$tasksArgs<ExtArgs>
   appointments?: boolean | Prisma.User$appointmentsArgs<ExtArgs>
@@ -2144,6 +2404,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   reminders?: boolean | Prisma.User$remindersArgs<ExtArgs>
   verificationToken?: boolean | Prisma.User$verificationTokenArgs<ExtArgs>
   resetToken?: boolean | Prisma.User$resetTokenArgs<ExtArgs>
+  subscription?: boolean | Prisma.User$subscriptionArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -2164,6 +2425,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     reminders: Prisma.$ReminderPayload<ExtArgs>[]
     verificationToken: Prisma.$EmailVerificationTokenPayload<ExtArgs> | null
     resetToken: Prisma.$PasswordResetTokenPayload<ExtArgs> | null
+    subscription: Prisma.$SubscriptionPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2171,6 +2433,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     name: string
     passwordHash: string
     emailVerified: boolean
+    avatarUrl: string | null
     refreshTokenDigest: string | null
     refreshTokenExpiresAt: Date | null
     createdAt: Date
@@ -2581,6 +2844,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   reminders<T extends Prisma.User$remindersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$remindersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReminderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   verificationToken<T extends Prisma.User$verificationTokenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$verificationTokenArgs<ExtArgs>>): Prisma.Prisma__EmailVerificationTokenClient<runtime.Types.Result.GetResult<Prisma.$EmailVerificationTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   resetToken<T extends Prisma.User$resetTokenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$resetTokenArgs<ExtArgs>>): Prisma.Prisma__PasswordResetTokenClient<runtime.Types.Result.GetResult<Prisma.$PasswordResetTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  subscription<T extends Prisma.User$subscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$subscriptionArgs<ExtArgs>>): Prisma.Prisma__SubscriptionClient<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2615,6 +2879,7 @@ export interface UserFieldRefs {
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly emailVerified: Prisma.FieldRef<"User", 'Boolean'>
+  readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
   readonly refreshTokenDigest: Prisma.FieldRef<"User", 'String'>
   readonly refreshTokenExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -3282,6 +3547,25 @@ export type User$resetTokenArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   include?: Prisma.PasswordResetTokenInclude<ExtArgs> | null
   where?: Prisma.PasswordResetTokenWhereInput
+}
+
+/**
+ * User.subscription
+ */
+export type User$subscriptionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Subscription
+   */
+  select?: Prisma.SubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Subscription
+   */
+  omit?: Prisma.SubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SubscriptionInclude<ExtArgs> | null
+  where?: Prisma.SubscriptionWhereInput
 }
 
 /**

@@ -66,6 +66,7 @@ async function refreshMessages(
       set({
         messages: msgs,
         hasMore: result.hasMore,
+        unreadCount: result.unreadCount,
         offset: msgs.length,
         loadStatus: 'loaded',
       })
@@ -89,24 +90,25 @@ export const useAgentMessagesStore = create<AgentMessagesStore>()(
         const { loadStatus } = get()
         if (loadStatus === 'loading' || loadStatus === 'loaded') return
         set({ loadStatus: 'loading' })
+        const epoch = get().epoch
         try {
-          const epoch = get().epoch
           const result = await listMessagesReq({ offset: 0, limit: PAGE_SIZE })
           if (get().epoch !== epoch) return
           const msgs = result.messages.map(toMessage)
-          const unreadCount = msgs.filter((m) => !m.read).length
-          if (get().epoch === epoch) {
-            set({
-              messages: msgs,
-              hasMore: result.hasMore,
-              unreadCount,
-              offset: msgs.length,
-              loadStatus: 'loaded',
-            })
-          }
+          set({
+            messages: msgs,
+            hasMore: result.hasMore,
+            unreadCount: result.unreadCount,
+            offset: msgs.length,
+            loadStatus: 'loaded',
+          })
         } catch (error) {
-          if (get().loadStatus === 'loading') set({ loadStatus: 'error' })
+          if (get().epoch === epoch) set({ loadStatus: 'error' })
           pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+            set({ loadStatus: 'idle' })
+          }
         }
       },
 
@@ -119,23 +121,26 @@ export const useAgentMessagesStore = create<AgentMessagesStore>()(
         const { loadStatus, hasMore } = get()
         if (loadStatus !== 'loaded' || !hasMore) return
         set({ loadStatus: 'loading' })
+        const epoch = get().epoch
         try {
-          const epoch = get().epoch
           const offset = get().offset
           const result = await listMessagesReq({ offset, limit: PAGE_SIZE })
           if (get().epoch !== epoch) return
           const msgs = result.messages.map(toMessage)
-          if (get().epoch === epoch) {
-            set((state) => ({
-              messages: [...state.messages, ...msgs],
-              hasMore: result.hasMore,
-              offset: offset + msgs.length,
-              loadStatus: 'loaded',
-            }))
-          }
+          set((state) => ({
+            messages: [...state.messages, ...msgs],
+            hasMore: result.hasMore,
+            unreadCount: result.unreadCount,
+            offset: offset + msgs.length,
+            loadStatus: 'loaded',
+          }))
         } catch (error) {
-          if (get().loadStatus === 'loading') set({ loadStatus: 'error' })
+          if (get().epoch === epoch) set({ loadStatus: 'error' })
           pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+            set({ loadStatus: 'idle' })
+          }
         }
       },
 

@@ -5,17 +5,16 @@ import {
   createAgent as createAgentReq,
   deleteAgent as deleteAgentReq,
   listAgents as listAgentsReq,
-  listAgentTools,
   runAgent as runAgentReq,
   updateAgent as updateAgentReq,
   type AgentDto,
-  type AgentToolDto,
   type AgentActionItem,
   type CreateAgentInput,
   type OutputDestination,
   type OutputType,
   type RunOutputRecord,
   type RunResultDto,
+  type UpdateAgentInput,
 } from '../repositories/agents.repository'
 
 export type { OutputDestination } from '../repositories/agents.repository'
@@ -101,7 +100,7 @@ type AgentsStore = {
   ensureLoaded: () => Promise<void>
   ensureTemplatesLoaded: () => Promise<void>
   createAgent: (input: CreateAgentInput) => Promise<void>
-  updateAgent: (id: string, patch: Partial<Agent>) => Promise<void>
+  updateAgent: (id: string, patch: UpdateAgentInput) => Promise<void>
   deleteAgent: (id: string) => Promise<void>
   runAgent: (id: string) => Promise<RunResult>
   setRunningAgent: (id: string | null) => void
@@ -168,27 +167,20 @@ export const useAgentsStore = create<AgentsStore>()(
         const { loadStatus } = get()
         if (loadStatus === 'loading' || loadStatus === 'loaded') return
         set({ loadStatus: 'loading' })
+        const epoch = get().epoch
         try {
-          const epoch = get().epoch
           const dtos = await listAgentsReq()
           if (get().epoch !== epoch) return
-          const toolsMap = new Map<string, AgentToolDto[]>()
-          const agents = await Promise.all(
-            dtos.map(async (dto) => {
-              try {
-                const tools = await listAgentTools(dto.id)
-                toolsMap.set(dto.id, tools)
-              } catch {
-                // tools are optional, continue without them
-              }
-              return toAgent({ ...dto, tools: toolsMap.get(dto.id) ?? dto.tools })
-            })
-          )
-          if (get().epoch !== epoch) return
-          set({ agents, loadStatus: 'loaded' })
+          // GET /api/agents already includes tools. Re-fetching per agent was an
+          // N+1 that delayed the whole page behind one request per agent.
+          set({ agents: dtos.map(toAgent), loadStatus: 'loaded' })
         } catch (error) {
-          if (get().loadStatus === 'loading') set({ loadStatus: 'error' })
+          if (get().epoch === epoch) set({ loadStatus: 'error' })
           pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+            set({ loadStatus: 'idle' })
+          }
         }
       },
 
@@ -217,14 +209,20 @@ export const useAgentsStore = create<AgentsStore>()(
           preferences: input.preferences ?? [],
           sources: input.sources ?? [],
           output: input.output ?? ['message'],
-          draftOnly: input.draftOnly ?? false,
+          draftOnly: input.draftOnly ?? true,
           modelKeyId: input.modelKeyId ?? null,
-          maxTokens: input.maxTokens ?? 4096,
+          maxTokens: input.maxTokens ?? 2000,
           lastRunAt: null,
           runCount: 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          tools: [],
+          tools: (input.tools ?? []).map((toolName) => ({
+            id: '',
+            agentId: '',
+            toolName,
+            enabled: true,
+            config: null,
+          })),
         }
         set((state) => ({
           agents: [...state.agents, optimistic],
@@ -245,8 +243,27 @@ export const useAgentsStore = create<AgentsStore>()(
       },
 
       updateAgent: async (id, patch) => {
+        const { tools, ...agentPatch } = patch
         set((state) => ({
-          agents: state.agents.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+          agents: state.agents.map((agent) => {
+            if (agent.id !== id) return agent
+            const next: Agent = { ...agent, ...agentPatch }
+            if (tools !== undefined) {
+              next.tools = tools.map((toolName) => {
+                const existing = agent.tools?.find((tool) => tool.toolName === toolName)
+                return existing
+                  ? { ...existing, enabled: true }
+                  : {
+                      id: '',
+                      agentId: id,
+                      toolName,
+                      enabled: true,
+                      config: null,
+                    }
+              })
+            }
+            return next
+          }),
           epoch: state.epoch + 1,
         }))
         try {

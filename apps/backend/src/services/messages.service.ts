@@ -27,7 +27,7 @@ export async function listMessages(
 
   const where: Prisma.AgentMessageWhereInput = { userId, ...(opts.unread !== undefined ? { read: !opts.unread } : {}) }
 
-  const [messages, total] = await Promise.all([
+  const [messages, total, unreadCount] = await Promise.all([
     db.agentMessage.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -35,9 +35,10 @@ export async function listMessages(
       take: limit,
     }),
     db.agentMessage.count({ where }),
+    db.agentMessage.count({ where: { userId, read: false } }),
   ])
 
-  return { messages, hasMore: offset + limit < total }
+  return { messages, hasMore: offset + limit < total, unreadCount }
 }
 
 export async function markRead(db: Db, userId: string, messageId: string) {

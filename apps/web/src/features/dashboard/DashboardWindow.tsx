@@ -22,7 +22,7 @@ export function DashboardWindow() {
         />
       ) : status === 'restoring' ? (
         <div className="flex min-h-[calc(100vh-1rem)] flex-col items-center justify-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-(--accent) text-white shadow-sm">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-(--accent) text-(--on-accent) shadow-sm">
             <Sparkles size={20} />
           </span>
           <span className="text-sm text-(--text-muted)">Checking your session…</span>

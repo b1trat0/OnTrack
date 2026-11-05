@@ -17,13 +17,13 @@ export type ListMessagesOpts = {
 
 export async function listMessages(
   opts: ListMessagesOpts = {}
-): Promise<{ messages: AgentMessageDto[]; hasMore: boolean }> {
+): Promise<{ messages: AgentMessageDto[]; hasMore: boolean; unreadCount: number }> {
   const params = new URLSearchParams()
   if (opts.offset !== undefined) params.set('offset', String(opts.offset))
   if (opts.limit !== undefined) params.set('limit', String(opts.limit))
   if (opts.unread !== undefined) params.set('unread', String(opts.unread))
   const qs = params.toString() ? `?${params.toString()}` : ''
-  return api<{ messages: AgentMessageDto[]; hasMore: boolean }>(
+  return api<{ messages: AgentMessageDto[]; hasMore: boolean; unreadCount: number }>(
     `/api/agents/messages${qs}`
   )
 }

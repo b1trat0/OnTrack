@@ -1,13 +1,33 @@
 import type { AgentOutputType, Prisma, PrismaClient } from '../generated/prisma/client'
 import { AppError } from '../lib/http'
 import { seedDefaultAgents } from './seed.service'
+import { TOOL_REGISTRY } from '../lib/tool-registry'
 
 type Db = PrismaClient | Prisma.TransactionClient
+
+const VALID_TOOL_NAMES = new Set(TOOL_REGISTRY.map((tool) => tool.name))
+
+/** Reject a tool name the runner cannot execute, instead of storing a dead row. */
+function assertValidTools(tools: string[]): void {
+  const invalid = tools.filter((tool) => !VALID_TOOL_NAMES.has(tool))
+  if (invalid.length > 0) {
+    throw new AppError('VALIDATION', `Unknown tool: ${invalid.join(', ')}`, 400)
+  }
+}
 
 async function findOwnedAgent(db: Db, userId: string, agentId: string) {
   const agent = await db.agent.findFirst({ where: { id: agentId, userId } })
   if (!agent) throw new AppError('NOT_FOUND', 'Agent not found.', 404)
   return agent
+}
+
+/** A model key is tenant data. An agent may only reference its owner's key. */
+async function assertOwnedModelKey(db: Db, userId: string, keyId: string): Promise<void> {
+  const key = await db.modelKey.findFirst({
+    where: { id: keyId, userId },
+    select: { id: true },
+  })
+  if (!key) throw new AppError('NOT_FOUND', 'Model key not found.', 404)
 }
 
 export async function listAgents(db: Db, userId: string) {
@@ -46,6 +66,7 @@ export async function createAgent(
     draftOnly?: boolean
     modelKeyId?: string | null
     maxTokens?: number
+    tools?: string[]
   }
 ) {
   let role = input.role
@@ -68,6 +89,13 @@ export async function createAgent(
   // inbox is the floor rather than "write nowhere".
   if (output.length === 0) output = ['message']
 
+  // The editor's tool selection wins. Fall back to the template's defaults only
+  // when the caller did not send a list at all. An explicit empty list means
+  // "no tools", which is a valid choice.
+  const tools = input.tools ?? defaultTools
+  assertValidTools(tools)
+  if (input.modelKeyId) await assertOwnedModelKey(db, userId, input.modelKeyId)
+
   return db.$transaction(async (tx) => {
     const agent = await tx.agent.create({
       data: {
@@ -89,9 +117,9 @@ export async function createAgent(
       include: { tools: true },
     })
 
-    if (defaultTools.length > 0) {
+    if (tools.length > 0) {
       await tx.agentTool.createMany({
-        data: defaultTools.map((toolName) => ({
+        data: tools.map((toolName) => ({
           agentId: agent.id,
           toolName,
           enabled: true,
@@ -120,6 +148,7 @@ export async function updateAgent(
     draftOnly?: boolean
     modelKeyId?: string | null
     maxTokens?: number
+    tools?: string[]
   }
 ) {
   await findOwnedAgent(db, userId, agentId)
@@ -127,10 +156,34 @@ export async function updateAgent(
   if (patch.output !== undefined && patch.output.length === 0) {
     throw new AppError('VALIDATION', 'Pick at least one place to deliver output.', 400)
   }
-  return db.agent.update({
-    where: { id: agentId },
-    data: patch,
-    include: { tools: true },
+  if (patch.tools !== undefined) assertValidTools(patch.tools)
+  if (patch.modelKeyId) await assertOwnedModelKey(db, userId, patch.modelKeyId)
+
+  const { tools, ...agentPatch } = patch
+
+  return db.$transaction(async (tx) => {
+    await tx.agent.update({
+      where: { id: agentId },
+      data: agentPatch,
+    })
+
+    if (tools !== undefined) {
+      // Disable first so a removed tool stops fetching immediately, then upsert
+      // the selected set. Config is preserved for tools that stay enabled.
+      await tx.agentTool.updateMany({
+        where: { agentId, toolName: { notIn: tools } },
+        data: { enabled: false },
+      })
+      for (const toolName of tools) {
+        await tx.agentTool.upsert({
+          where: { agentId_toolName: { agentId, toolName } },
+          create: { agentId, toolName, enabled: true },
+          update: { enabled: true },
+        })
+      }
+    }
+
+    return tx.agent.findUnique({ where: { id: agentId }, include: { tools: true } })
   })
 }
 

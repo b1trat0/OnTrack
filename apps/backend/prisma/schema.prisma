@@ -14,6 +14,7 @@ model User {
   name                   String
   passwordHash           String
   emailVerified          Boolean   @default(false)
+  avatarUrl              String?
   refreshTokenDigest     String?   @unique
   refreshTokenExpiresAt  DateTime?
   createdAt              DateTime  @default(now())
@@ -31,6 +32,28 @@ model User {
   reminders         Reminder[]
   verificationToken EmailVerificationToken?
   resetToken        PasswordResetToken?
+  subscription      Subscription?
+}
+
+model Subscription {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan               String   @default("free") // free | pro | teams | industry
+  status             String   @default("active") // active | trialing | past_due | canceled | incomplete
+  provider           String?  // "stripe"
+  customerId         String?  @unique
+  subscriptionId     String?  @unique
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model BillingEvent {
+  id          String   @id // provider event id, used for idempotency
+  type        String
+  processedAt DateTime @default(now())
 }
 
 model EmailVerificationToken {
@@ -112,6 +135,8 @@ model Appointment {
   endTime   String?
   color     String
   notes     String             @default("")
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 
   @@index([userId, date])
 }
@@ -163,6 +188,8 @@ model Agent {
   tools        AgentTool[]
   modelKey     ModelKey?       @relation(fields: [modelKeyId], references: [id])
   template     AgentTemplate?  @relation(fields: [templateId], references: [id])
+
+  @@index([userId])
 }
 
 model AgentTemplate {
@@ -221,6 +248,9 @@ model AgentRun {
   agentId    String
   agent      Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
   status     String    @default("running")
+  /// Set to the agent id while a run is in flight; null once finished. Unique,
+  /// so two Workers cannot run the same agent at the same time.
+  lockKey    String?   @unique
   inputSnap  String?
   outputSnap String?
   toolCalls  String?

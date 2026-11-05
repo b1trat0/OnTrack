@@ -6,6 +6,7 @@ export type AppUser = {
   email: string
   name: string
   emailVerified: boolean
+  avatarUrl?: string | null
   createdAt: string
 }
 
@@ -75,6 +76,39 @@ export async function resetPassword(token: string, newPassword: string): Promise
 export async function me(): Promise<AppUser> {
   const data = await api<AppUser>('/api/auth/me')
   return data
+}
+
+export async function updateProfile(patch: {
+  name?: string
+  avatarUrl?: string | null
+}): Promise<AppUser> {
+  return api<AppUser>('/api/auth/me', {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  await api<void>('/api/auth/password', {
+    method: 'PATCH',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
+}
+
+export type AccountExport = Record<string, unknown>
+
+export async function exportAccount(): Promise<AccountExport> {
+  return api<AccountExport>('/api/auth/export')
+}
+
+export async function deleteAccount(password: string): Promise<void> {
+  await api<void>('/api/auth/me', {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+  })
 }
 
 /** Retries the session using any stored refresh token, then fetches the profile. */

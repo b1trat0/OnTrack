@@ -23,7 +23,7 @@ export const handleListMessages = (c: Context) =>
   handle(c, async () => {
     const query = validateQuery(c, listMessagesQuery)
     if (!query.ok) return query.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const result = await messagesService.listMessages(db, c.get('userId'), query.data)
     return ok(c, result)
   })
@@ -34,7 +34,7 @@ export const handleMarkRead = (c: Context) =>
     if (!messageId) return badParam(c)
     const body = await validateBody(c, markReadSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const message = await messagesService.markRead(db, c.get('userId'), messageId)
     return ok(c, message)
   })
@@ -43,7 +43,7 @@ export const handleDeleteMessage = (c: Context) =>
   handle(c, async () => {
     const messageId = idGuard(c.req.param('id'))
     if (!messageId) return badParam(c)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await messagesService.deleteMessage(db, c.get('userId'), messageId)
   })
 

@@ -30,6 +30,8 @@ function formatDuration(ms: number): string {
 export function RunHistory({ agentId }: RunHistoryProps) {
   const [runs, setRuns] = useState<AgentRunDto[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showAll, setShowAll] = useState(false)
@@ -37,11 +39,36 @@ export function RunHistory({ agentId }: RunHistoryProps) {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    listRuns(agentId)
-      .then((data) => { if (!cancelled) { setRuns(data); setLoading(false) } })
-      .catch(() => { if (!cancelled) { setError('Failed to load run history'); setLoading(false) } })
-    return () => { cancelled = true }
+    setShowAll(false)
+    listRuns(agentId, { limit: 20 })
+      .then((data) => {
+        if (cancelled) return
+        setRuns(data.runs)
+        setHasMore(data.hasMore)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setError('Failed to load run history')
+        setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [agentId])
+
+  const loadMore = async () => {
+    setLoadingMore(true)
+    try {
+      const data = await listRuns(agentId, { limit: 20, offset: runs.length })
+      setRuns((current) => [...current, ...data.runs])
+      setHasMore(data.hasMore)
+    } catch {
+      setError('Failed to load more runs')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -138,6 +165,16 @@ export function RunHistory({ agentId }: RunHistoryProps) {
           className="text-center text-xs font-medium text-(--accent) transition hover:underline"
         >
           Show all {runs.length} runs
+        </button>
+      ) : null}
+
+      {hasMore ? (
+        <button
+          onClick={() => void loadMore()}
+          disabled={loadingMore}
+          className="text-center text-xs font-medium text-(--text-muted) transition hover:text-(--text) disabled:opacity-50"
+        >
+          {loadingMore ? 'Loading…' : 'Load older runs'}
         </button>
       ) : null}
     </div>

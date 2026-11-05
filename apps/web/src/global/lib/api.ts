@@ -19,11 +19,28 @@ export class ApiError extends Error {
 
 let refreshPromise: Promise<boolean> | null = null
 
+/**
+ * Packaged Electron builds load from `file://`, where the Vite dev proxy does
+ * not exist. `VITE_API_BASE` supplies the absolute backend origin; browser
+ * builds keep using the relative `/api` path behind the proxy or reverse proxy.
+ */
+const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/+$/, '')
+
+function resolveApiPath(path: string): string {
+  if (API_BASE) return `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`
+  if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+    throw new Error(
+      'VITE_API_BASE is required for packaged desktop builds. Set it to the deployed backend origin.'
+    )
+  }
+  return path
+}
+
 async function exchangeRefreshToken(): Promise<boolean> {
   const refreshToken = getRefreshToken()
   if (!refreshToken) return false
   try {
-    const response = await fetch('/api/auth/refresh', {
+    const response = await fetch(resolveApiPath('/api/auth/refresh'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -56,7 +73,7 @@ export async function api<T>(
   retryOnUnauthorized = true
 ): Promise<T> {
   const token = getAccessToken()
-  const response = await fetch(path, {
+  const response = await fetch(resolveApiPath(path), {
     ...init,
     headers: {
       'Content-Type': 'application/json',

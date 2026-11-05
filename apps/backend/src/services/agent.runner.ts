@@ -1,6 +1,7 @@
 import type { PrismaClient } from '../generated/prisma/client'
 import type { Env } from '../types'
 import { AppError } from '../lib/http'
+import { log } from '../lib/logger'
 import { decrypt } from '../lib/crypto'
 import { DEFAULT_BASE_URL, FALLBACK_MODEL, resolveBaseUrl } from '../lib/llm-providers'
 import {
@@ -17,9 +18,52 @@ import { getGmailAccessToken } from './integrations.service'
 import { createMessage } from './messages.service'
 import { createAppointment } from './appointment.service'
 import { createTask } from './task.service'
-import { resolveOutputDestinations, filterPendingActionsByDestination, type OutputDestination } from '../lib/output-destination'
 
-const DAILY_RUN_LIMIT = 50
+import { resolveOutputDestinations, type OutputDestination } from '../lib/output-destination'
+import { getEntitlements, type PlanId } from './entitlements.service'
+
+
+export const DAILY_RUN_LIMIT = 50
+export const MONTHLY_TOKEN_BUDGET = 500_000
+const STALE_RUN_MS = 15 * 60 * 1000
+
+/**
+ * Start of the user's local day, expressed as a UTC instant.
+ *
+ * Workers run in UTC, so a raw `setHours(0,0,0,0)` reset the daily cap at UTC
+ * midnight for everyone. Cloudflare supplies `cf-timezone`; the controller
+ * passes it here.
+ */
+function startOfDayInTimeZone(timeZone: string): Date {
+  const now = new Date()
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(now)
+    const get = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0)
+    const asUtc = Date.UTC(
+      get('year'),
+      get('month') - 1,
+      get('day'),
+      get('hour'),
+      get('minute'),
+      get('second')
+    )
+    const offsetMs = asUtc - now.getTime()
+    return new Date(Date.UTC(get('year'), get('month') - 1, get('day')) - offsetMs)
+  } catch {
+    const fallback = new Date(now)
+    fallback.setUTCHours(0, 0, 0, 0)
+    return fallback
+  }
+}
 
 const runningAgents = new Set<string>()
 
@@ -50,7 +94,7 @@ async function gatherContext(
     try {
       result.news = await fetchNewsForAgent(newsSources, [], 15)
     } catch {
-      console.error('[runner] news fetch failed')
+      log('warn', 'agent_news_fetch_failed', { agentId })
     }
   }
 
@@ -63,7 +107,7 @@ async function gatherContext(
       try {
         result.emails = await fetchRecentEmails(accessToken, 24)
       } catch {
-        console.error('[runner] gmail fetch failed')
+        log('warn', 'agent_gmail_fetch_failed', { agentId })
       }
     }
   }
@@ -96,6 +140,11 @@ type WriteOutputResult = {
    * `RunResult.pendingActions` so the approval modal cannot create a second copy.
    */
   consumed: PendingAction[]
+  /**
+   * Draft-mode proposals. When `draftOnly` is on, a configured notes/calendar
+   * destination does not write; it proposes an item for the user to approve.
+   */
+  proposed: PendingAction[]
 }
 
 const CALENDAR_COLOR = '#8b5cf6'
@@ -133,12 +182,16 @@ async function writeOutput(
   outputTypes: readonly string[],
   aiText: string,
   agentName: string,
+  draftOnly: boolean,
   actions: PendingAction[]
 ): Promise<WriteOutputResult> {
   const destinations = resolveOutputDestinations(outputTypes)
   const records: OutputRecord[] = []
   const consumed: PendingAction[] = []
+  const proposed: PendingAction[] = []
   const wroteNotes = { value: false }
+  const today = new Date().toISOString().slice(0, 10)
+  let proposedNote = false
 
   const writeNote = async (title: string, fallbackFrom?: OutputDestination) => {
     const task = await createTask(db, userId, {
@@ -156,6 +209,14 @@ async function writeOutput(
     wroteNotes.value = true
   }
 
+  // In draft mode the Notes destination becomes a proposal, not a write. The
+  // full output travels in `note` so approving it creates a complete card.
+  const proposeNote = (title: string) => {
+    if (proposedNote) return
+    proposedNote = true
+    proposed.push({ kind: 'task', title, date: today, note: aiText })
+  }
+
   for (const destination of destinations) {
     if (destination === 'inbox') {
       const message = await createMessage(db, userId, agentId, `${agentName} output`, aiText)
@@ -164,6 +225,10 @@ async function writeOutput(
     }
 
     if (destination === 'notes') {
+      if (draftOnly) {
+        proposeNote(titleFromOutput(agentName, aiText))
+        continue
+      }
       await writeNote(titleFromOutput(agentName, aiText))
       continue
     }
@@ -173,9 +238,19 @@ async function writeOutput(
       // Nothing to schedule. Writing an undated event would put a phantom row on
       // the calendar, so the output becomes a note instead — unless the notes
       // destination already wrote this same text, in which case it is covered.
+      if (draftOnly) {
+        proposeNote(titleFromOutput(agentName, aiText))
+        continue
+      }
       if (!wroteNotes.value) {
         await writeNote(titleFromOutput(agentName, aiText), 'calendar')
       }
+      continue
+    }
+
+    if (draftOnly) {
+      // Dated [EVENT] lines are already parsed into pendingActions by the caller.
+      // Proposing them again here would show duplicates in the approval modal.
       continue
     }
 
@@ -194,7 +269,7 @@ async function writeOutput(
     }
   }
 
-  return { destinations, records, consumed }
+  return { destinations, records, consumed, proposed }
 }
 
 export type RunResult = {
@@ -257,27 +332,81 @@ function toRunListItem(run: {
   }
 }
 
+export type RunUsage = {
+  plan: PlanId
+  dailyRuns: number
+  dailyRunLimit: number
+  monthlyTokens: number
+  monthlyTokenLimit: number
+  monthStart: string
+}
+
+/** Usage shown on the plan page; mirrors the runner's quota windows. */
+export async function getRunUsage(
+  db: PrismaClient,
+  userId: string,
+  timeZone = 'UTC'
+): Promise<RunUsage> {
+  const entitlements = await getEntitlements(db, userId)
+  const dayStart = startOfDayInTimeZone(timeZone)
+  const monthStart = new Date()
+  monthStart.setUTCDate(1)
+  monthStart.setUTCHours(0, 0, 0, 0)
+
+  const [dailyRuns, monthly] = await Promise.all([
+    db.agentRun.count({ where: { userId, startedAt: { gte: dayStart } } }),
+    db.agentRun.aggregate({
+      where: { userId, startedAt: { gte: monthStart } },
+      _sum: { tokensUsed: true },
+    }),
+  ])
+
+  return {
+    plan: entitlements.plan,
+    dailyRuns,
+    dailyRunLimit: entitlements.dailyRuns,
+    monthlyTokens: monthly._sum.tokensUsed ?? 0,
+    monthlyTokenLimit: entitlements.monthlyTokens,
+    monthStart: monthStart.toISOString(),
+  }
+}
+
 export async function runAgent(
   db: PrismaClient,
   userId: string,
   agentId: string,
-  env: Env
+  env: Env,
+  timeZone = 'UTC'
 ): Promise<RunResult> {
   const started = Date.now()
   if (runningAgents.has(agentId)) {
     throw new AppError('CONFLICT', 'This agent is already running.', 409)
   }
 
-  const todayCount = await db.agentRun.count({
-    where: {
-      userId,
-      startedAt: {
-        gte: new Date(new Date().setHours(0, 0, 0, 0)),
-      },
-    },
-  })
-  if (todayCount >= DAILY_RUN_LIMIT) {
-    throw new AppError('RATE_LIMIT', 'Daily run limit reached (50).', 429)
+  const entitlements = await getEntitlements(db, userId)
+  const dayStart = startOfDayInTimeZone(timeZone)
+  const monthStart = new Date()
+  monthStart.setUTCDate(1)
+  monthStart.setUTCHours(0, 0, 0, 0)
+
+  const [todayCount, monthlyUsage] = await Promise.all([
+    db.agentRun.count({
+      where: { userId, startedAt: { gte: dayStart } },
+    }),
+    db.agentRun.aggregate({
+      where: { userId, startedAt: { gte: monthStart } },
+      _sum: { tokensUsed: true },
+    }),
+  ])
+  if (todayCount >= entitlements.dailyRuns) {
+    throw new AppError('RATE_LIMIT', `Daily run limit reached (${entitlements.dailyRuns}).`, 429)
+  }
+  if ((monthlyUsage._sum.tokensUsed ?? 0) >= entitlements.monthlyTokens) {
+    throw new AppError(
+      'BUDGET_EXCEEDED',
+      `Monthly token budget reached (${entitlements.monthlyTokens.toLocaleString()} tokens).`,
+      429
+    )
   }
 
   const agent = await db.agent.findFirst({
@@ -285,6 +414,12 @@ export async function runAgent(
     include: { modelKey: true, tools: true },
   })
   if (!agent) throw new AppError('NOT_FOUND', 'Agent not found.', 404)
+
+  // A legacy or tampered row could point at another tenant's key. Never spend
+  // someone else's provider credits.
+  if (agent.modelKey && agent.modelKey.userId !== userId) {
+    throw new AppError('NOT_FOUND', 'Model key not found.', 404)
+  }
 
   let apiKey = env.OPENROUTER_API_KEY
   let baseUrl = DEFAULT_BASE_URL
@@ -309,17 +444,41 @@ export async function runAgent(
     )
   }
 
-  runningAgents.add(agentId)
-
-  const run = await db.agentRun.create({
-    data: {
-      userId,
+  // Reclaim a lock left behind by a crashed isolate before competing for a new one.
+  await db.agentRun.updateMany({
+    where: {
       agentId,
       status: 'running',
-      startedAt: new Date(),
-      inputSnap: JSON.stringify({ agentId, model, sources: agent.sources }),
+      lockKey: agentId,
+      startedAt: { lt: new Date(Date.now() - STALE_RUN_MS) },
+    },
+    data: {
+      status: 'failed',
+      error: 'Run timed out before finishing.',
+      finishedAt: new Date(),
+      lockKey: null,
     },
   })
+
+  let run: { id: string }
+  try {
+    run = await db.agentRun.create({
+      data: {
+        userId,
+        agentId,
+        status: 'running',
+        lockKey: agentId,
+        startedAt: new Date(),
+        inputSnap: JSON.stringify({ agentId, model, sources: agent.sources }),
+      },
+    })
+  } catch (error) {
+    if ((error as { code?: string }).code === 'P2002') {
+      throw new AppError('CONFLICT', 'This agent is already running.', 409)
+    }
+    throw error
+  }
+  runningAgents.add(agentId)
 
   try {
     const contextData = await gatherContext(db, userId, agentId, agent.sources, env)
@@ -332,14 +491,15 @@ export async function runAgent(
         db,
         userId,
         agentId,
-        agent.output,
+        ['message'],
         explanation,
         agent.name,
+        agent.draftOnly,
         []
       )
       await db.agentRun.update({
         where: { id: run.id },
-        data: { status: 'success', outputSnap: explanation, finishedAt: new Date() },
+        data: { status: 'success', outputSnap: explanation, finishedAt: new Date(), lockKey: null },
       })
       await db.agent.update({
         where: { id: agentId },
@@ -393,6 +553,7 @@ export async function runAgent(
       agent.output,
       cleanedText,
       agent.name,
+      agent.draftOnly,
       pendingActions
     )
 
@@ -403,6 +564,7 @@ export async function runAgent(
         outputSnap: aiText,
         tokensUsed,
         finishedAt: new Date(),
+        lockKey: null,
       },
     })
 
@@ -414,14 +576,20 @@ export async function runAgent(
       },
     })
 
-    // Two filters, because the marker contract is appended to every system
-    // prompt regardless of `output`. Events the calendar destination already
-    // wrote are withheld so the approval modal cannot duplicate them, and the
-    // rest are withheld when the agent was not configured for the surface they
-    // would land on. Without the second filter an inbox-only agent was offered
-    // every [TASK]/[NOTE] line the model happened to write.
-    const proposed = filterPendingActionsByDestination(pendingActions, agent.output)
-    const remaining = proposed.filter((action) => !written.consumed.includes(action))
+
+    // Dated events the calendar destination already wrote are withheld, so the
+    // approval modal cannot create a duplicate appointment for the same line.
+    const pendingRemaining = pendingActions.filter((action) => !written.consumed.includes(action))
+    const remaining = [...written.proposed, ...pendingRemaining].filter(
+      (action, index, list) =>
+        list.findIndex(
+          (candidate) =>
+            candidate.kind === action.kind &&
+            candidate.title === action.title &&
+            (candidate.date ?? '') === (action.date ?? '')
+        ) === index
+    )
+
 
     return {
       runId: run.id,
@@ -441,6 +609,7 @@ export async function runAgent(
         status: 'failed',
         error: errorMsg,
         finishedAt: new Date(),
+        lockKey: null,
       },
     })
 

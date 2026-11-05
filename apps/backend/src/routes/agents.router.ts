@@ -7,6 +7,7 @@ agentsRouter.use('*', authVerify)
 
 agentsRouter.get('/', ctrl.handleListAgents)
 agentsRouter.post('/', ctrl.handleCreateAgent)
+agentsRouter.get('/usage', ctrl.handleGetUsage)
 agentsRouter.post('/:id/run', ctrl.handleRunAgent)
 agentsRouter.get('/:id/runs', ctrl.handleListRuns)
 agentsRouter.get('/:id', ctrl.handleGetAgent)

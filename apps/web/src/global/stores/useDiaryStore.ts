@@ -89,8 +89,32 @@ type DiaryStore = {
   reveal: (id: string, password: string) => Promise<void>
 }
 
-/** Legacy key written by the old `persist`-wrapped store. */
-const LEGACY_PERSIST_KEY = 'ontrack-diary'
+
+export const useDiaryStore = create<DiaryStore>()(
+  persist(
+    (set, get) => {
+      async function refreshCurrentMonth(): Promise<void> {
+        const expected = get().epoch + 1
+        set({ loadStatus: 'loading', epoch: expected })
+        try {
+          const month = get().activeMonth
+          const page = await loadDiary(month, 0, DIARY_PAGE_SIZE)
+          if (get().epoch !== expected) return
+          set((state) => ({
+            entries: mergeEntries(state.entries, page.entries.map(toDiaryEntry)),
+            hasMore: page.hasMore,
+            loadStatus: 'loaded',
+          }))
+        } catch (error) {
+          if (get().epoch === expected) set({ loadStatus: 'error' })
+          pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== expected) {
+            set({ loadStatus: 'idle' })
+          }
+        }
+      }
+
 
 /**
  * Deletes the legacy `ontrack-diary` localStorage key.
@@ -137,37 +161,86 @@ export const useDiaryStore = create<DiaryStore>()((set, get) => {
     }
   }
 
-  return {
-    entries: [],
-    hasMore: false,
-    loadStatus: 'idle',
-    activeMonth: null,
-    epoch: 0,
+        ensureLoaded: async () => {
+          if (get().loadStatus === 'loading' || get().loadStatus === 'loaded') return
+          set({ loadStatus: 'loading' })
+          const epoch = get().epoch
+          try {
+            const first = await loadDiary(null, 0, 1)
+            if (get().epoch !== epoch) return
+            if (first.entries.length > 0) {
+              const latest = toDiaryEntry(first.entries[0])
+              set((state) => ({
+                entries: mergeEntries(state.entries, [latest]),
+                loadStatus: 'loaded',
+              }))
+            } else {
+              // Never upload the previous account's cache as a "seed". The
+              // server is the source of truth; an empty account stays empty.
+              set({ loadStatus: 'loaded' })
+            }
+          } catch (error) {
+            if (get().epoch === epoch) set({ loadStatus: 'error' })
+            pushSyncError(error)
+          } finally {
+            if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+              set({ loadStatus: 'idle' })
+            }
+          }
+        },
 
-    refresh: async () => {
-      await refreshCurrentMonth()
-    },
+        ensureMonth: async (month) => {
+          if (
+            get().activeMonth === month &&
+            get().loadStatus === 'loaded' &&
+            get().entries.some((entry) => matchesMonth(entry, month))
+          ) {
+            return
+          }
+          set({ activeMonth: month, loadStatus: 'loading', epoch: get().epoch + 1 })
+          const expected = get().epoch
+          try {
+            const page = await loadDiary(month, 0, DIARY_PAGE_SIZE)
+            if (get().epoch !== expected) return
+            set((state) => ({
+              entries: mergeEntries(state.entries, page.entries.map(toDiaryEntry)),
+              hasMore: page.hasMore,
+              loadStatus: 'loaded',
+            }))
+          } catch (error) {
+            if (get().epoch === expected) set({ loadStatus: 'error' })
+            pushSyncError(error)
+          } finally {
+            if (get().loadStatus === 'loading' && get().epoch !== expected) {
+              set({ loadStatus: 'idle' })
+            }
+          }
+        },
 
-    ensureLoaded: async () => {
-      if (get().loadStatus === 'loading' || get().loadStatus === 'loaded')
-        return
-      set({ loadStatus: 'loading' })
-      try {
-        const epoch = get().epoch
-        // Only the newest row is needed to seed `entries[0]`, which feeds the
-        // Today page and the dashboard widget. The full month arrives via
-        // ensureMonth().
-        const first = await loadDiary(null, 0, 1)
-        if (get().epoch !== epoch) return
-        set((state) => ({
-          entries: mergeEntries(state.entries, first.entries.map(toDiaryEntry)),
-          loadStatus: 'loaded',
-        }))
-      } catch (error) {
-        set({ loadStatus: 'error' })
-        pushSyncError(error)
-      }
-    },
+        loadMore: async () => {
+          if (get().loadStatus !== 'loaded' || !get().hasMore) return
+          set({ loadStatus: 'loading', epoch: get().epoch + 1 })
+          const expected = get().epoch
+          try {
+            const month = get().activeMonth
+            const offset = get().entries.filter((entry) => matchesMonth(entry, month)).length
+            const page = await loadDiary(month, offset, DIARY_PAGE_SIZE)
+            if (get().epoch !== expected) return
+            set((state) => ({
+              entries: mergeEntries(state.entries, page.entries.map(toDiaryEntry)),
+              hasMore: page.hasMore,
+              loadStatus: 'loaded',
+            }))
+          } catch (error) {
+            if (get().epoch === expected) set({ loadStatus: 'error' })
+            pushSyncError(error)
+          } finally {
+            if (get().loadStatus === 'loading' && get().epoch !== expected) {
+              set({ loadStatus: 'idle' })
+            }
+          }
+        },
+
 
     ensureMonth: async (month) => {
       if (

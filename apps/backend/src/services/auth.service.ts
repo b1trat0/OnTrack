@@ -1,6 +1,7 @@
 import { compare, hash } from 'bcryptjs'
 import type { PrismaClient } from '../generated/prisma/client'
 import { AppError } from '../lib/http'
+import { log } from '../lib/logger'
 import { signAccessToken } from '../lib/jwt'
 import { digestToken, randomToken } from '../lib/tokens'
 import { createEmailSender, createEmailLinkBuilder, passwordResetEmailHtml, verificationEmailHtml } from './email.service'
@@ -17,6 +18,7 @@ export type SafeUser = {
   email: string
   name: string
   emailVerified: boolean
+  avatarUrl: string | null
   createdAt: string
 }
 
@@ -33,6 +35,7 @@ type UserWithTokens = {
   email: string
   name: string
   emailVerified: boolean
+  avatarUrl: string | null
   createdAt: Date
 }
 
@@ -41,6 +44,7 @@ const toSafeUser = (user: UserWithTokens): SafeUser => ({
   email: user.email,
   name: user.name,
   emailVerified: user.emailVerified,
+  avatarUrl: user.avatarUrl,
   createdAt: user.createdAt.toISOString(),
 })
 
@@ -100,7 +104,14 @@ async function issueSession(db: PrismaClient, user: UserWithTokens, jwtSecret: s
 
 export async function signup(
   db: PrismaClient,
-  input: { email: string; name: string; password: string; jwtSecret: string } & EmailContext
+  input: {
+    email: string
+    name: string
+    password: string
+    jwtSecret: string
+    /** Cloudflare `executionCtx.waitUntil`; without it the worker may exit before the mail is sent. */
+    waitUntil?: (promise: Promise<unknown>) => void
+  } & EmailContext
 ): Promise<{ user: SafeUser }> {
   const email = normalizeEmail(input.email)
   const existing = await db.user.findUnique({ where: { email } })
@@ -116,10 +127,14 @@ export async function signup(
   try {
     await seedDefaultAgents(db, user.id)
   } catch (err) {
-    console.error('[ontrack] default agent seeding failed', err)
+    log('error', 'default_agent_seed_failed', {
+      userId: user.id,
+      message: err instanceof Error ? err.message : String(err),
+    })
   }
 
-  const token = randomToken()
+  const rawToken = randomToken()
+  const token = await digestToken(rawToken)
   const expiresAt = new Date(Date.now() + VERIFY_TOKEN_TTL_MS)
   await db.emailVerificationToken.upsert({
     where: { userId: user.id },
@@ -127,9 +142,18 @@ export async function signup(
     update: { token, expiresAt },
   })
 
-  void sendVerificationMail(input, { to: email, name: user.name, token }).catch((err) => {
-    console.error('[ontrack] verification email failed', err)
-  })
+  const mailPromise = sendVerificationMail(input, { to: email, name: user.name, token: rawToken }).catch(
+    (err) => {
+      log('error', 'verification_email_failed', {
+        message: err instanceof Error ? err.message : String(err),
+      })
+    }
+  )
+  // On Workers, awaiting the mail delays the response and a fire-and-forget
+  // promise can be cancelled when the isolate is torn down. waitUntil is the
+  // only correct middle ground.
+  if (input.waitUntil) input.waitUntil(mailPromise)
+  else await mailPromise
 
   return { user: toSafeUser(user) }
 }
@@ -208,8 +232,51 @@ export async function changePassword(
   })
 }
 
+/** Full user-owned dataset for a JSON export. Secrets and key ciphertext are excluded. */
+export async function exportAccount(db: PrismaClient, userId: string) {
+  const user = await db.user.findUnique({ where: { id: userId } })
+  if (!user) throw new AppError('NOT_FOUND', 'User not found.', 404)
+
+  const [tasks, appointments, diaryEntries, agents, agentMessages, modelKeys] = await Promise.all([
+    db.task.findMany({ where: { userId }, orderBy: [{ status: 'asc' }, { position: 'asc' }] }),
+    db.appointment.findMany({ where: { userId }, orderBy: [{ date: 'asc' }, { startTime: 'asc' }] }),
+    db.diaryEntry.findMany({ where: { userId }, orderBy: [{ date: 'desc' }, { createdAt: 'desc' }] }),
+    db.agent.findMany({ where: { userId }, include: { tools: true } }),
+    db.agentMessage.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
+    db.modelKey.findMany({
+      where: { userId },
+      select: { id: true, provider: true, label: true, defaultModel: true, createdAt: true },
+    }),
+  ])
+
+  return {
+    exportedAt: new Date().toISOString(),
+    user: toSafeUser(user),
+    tasks,
+    appointments,
+    diaryEntries,
+    agents,
+    agentMessages,
+    modelKeys,
+  }
+}
+
+/** Deletes the account and every related row. Requires the current password. */
+export async function deleteAccount(
+  db: PrismaClient,
+  userId: string,
+  password: string
+): Promise<void> {
+  const user = await db.user.findUnique({ where: { id: userId } })
+  if (!user) throw new AppError('UNAUTHORIZED', 'Not authenticated.', 401)
+  const valid = await compare(password, user.passwordHash)
+  if (!valid) throw new AppError('INVALID_PASSWORD', 'Password is incorrect.', 403)
+  await db.user.delete({ where: { id: userId } })
+}
+
 export async function verifyEmail(db: PrismaClient, token: string): Promise<void> {
-  const record = await db.emailVerificationToken.findUnique({ where: { token } })
+  const digest = await digestToken(token)
+  const record = await db.emailVerificationToken.findUnique({ where: { token: digest } })
   if (!record || record.expiresAt.getTime() < Date.now()) {
     throw new AppError('INVALID_VERIFICATION', 'Invalid or expired verification link.', 400)
   }
@@ -225,14 +292,15 @@ export async function resendVerificationEmail(
 ): Promise<void> {
   const user = await db.user.findUnique({ where: { email: normalizeEmail(input.email) } })
   if (!user) return
-  const token = randomToken()
+  const rawToken = randomToken()
+  const token = await digestToken(rawToken)
   const expiresAt = new Date(Date.now() + VERIFY_TOKEN_TTL_MS)
   await db.emailVerificationToken.upsert({
     where: { userId: user.id },
     create: { userId: user.id, token, expiresAt },
     update: { token, expiresAt },
   })
-  await sendVerificationMail(input, { to: user.email, name: user.name, token })
+  await sendVerificationMail(input, { to: user.email, name: user.name, token: rawToken })
 }
 
 export async function forgotPassword(
@@ -241,21 +309,23 @@ export async function forgotPassword(
 ): Promise<void> {
   const user = await db.user.findUnique({ where: { email: normalizeEmail(input.email) } })
   if (!user) return
-  const token = randomToken()
+  const rawToken = randomToken()
+  const token = await digestToken(rawToken)
   const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS)
   await db.passwordResetToken.upsert({
     where: { userId: user.id },
     create: { userId: user.id, token, expiresAt },
     update: { token, expiresAt },
   })
-  await sendResetMail(input, { to: user.email, name: user.name, token })
+  await sendResetMail(input, { to: user.email, name: user.name, token: rawToken })
 }
 
 export async function resetPassword(
   db: PrismaClient,
   input: { token: string; newPassword: string }
 ): Promise<void> {
-  const record = await db.passwordResetToken.findUnique({ where: { token: input.token } })
+  const digest = await digestToken(input.token)
+  const record = await db.passwordResetToken.findUnique({ where: { token: digest } })
   if (!record || record.expiresAt.getTime() < Date.now()) {
     throw new AppError('INVALID_RESET_TOKEN', 'Invalid or expired reset link.', 400)
   }

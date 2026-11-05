@@ -77,14 +77,17 @@ export const useModelKeysStore = create<ModelKeysStore>()(
         const { loadStatus } = get()
         if (loadStatus === 'loading' || loadStatus === 'loaded') return
         set({ loadStatus: 'loading' })
+        const epoch = get().epoch
         try {
-          const epoch = get().epoch
           const dtos = await listModelKeysReq()
-          if (get().epoch !== epoch) return
           if (get().epoch === epoch) set({ keys: dtos.map(toModelKey), loadStatus: 'loaded' })
         } catch (error) {
-          if (get().loadStatus === 'loading') set({ loadStatus: 'error' })
+          if (get().epoch === epoch) set({ loadStatus: 'error' })
           pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+            set({ loadStatus: 'idle' })
+          }
         }
       },
 

@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Subscription: 'Subscription',
+  BillingEvent: 'BillingEvent',
   EmailVerificationToken: 'EmailVerificationToken',
   PasswordResetToken: 'PasswordResetToken',
   Task: 'Task',
@@ -90,6 +92,7 @@ export const UserScalarFieldEnum = {
   name: 'name',
   passwordHash: 'passwordHash',
   emailVerified: 'emailVerified',
+  avatarUrl: 'avatarUrl',
   refreshTokenDigest: 'refreshTokenDigest',
   refreshTokenExpiresAt: 'refreshTokenExpiresAt',
   createdAt: 'createdAt',
@@ -97,6 +100,32 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const SubscriptionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  plan: 'plan',
+  status: 'status',
+  provider: 'provider',
+  customerId: 'customerId',
+  subscriptionId: 'subscriptionId',
+  currentPeriodEnd: 'currentPeriodEnd',
+  cancelAtPeriodEnd: 'cancelAtPeriodEnd',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
+
+
+export const BillingEventScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  processedAt: 'processedAt'
+} as const
+
+export type BillingEventScalarFieldEnum = (typeof BillingEventScalarFieldEnum)[keyof typeof BillingEventScalarFieldEnum]
 
 
 export const EmailVerificationTokenScalarFieldEnum = {
@@ -146,7 +175,9 @@ export const AppointmentScalarFieldEnum = {
   startTime: 'startTime',
   endTime: 'endTime',
   color: 'color',
-  notes: 'notes'
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type AppointmentScalarFieldEnum = (typeof AppointmentScalarFieldEnum)[keyof typeof AppointmentScalarFieldEnum]
@@ -246,6 +277,7 @@ export const AgentRunScalarFieldEnum = {
   userId: 'userId',
   agentId: 'agentId',
   status: 'status',
+  lockKey: 'lockKey',
   inputSnap: 'inputSnap',
   outputSnap: 'outputSnap',
   toolCalls: 'toolCalls',

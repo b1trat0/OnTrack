@@ -19,7 +19,7 @@ const createModelKeySchema = z.object({
 
 export const handleListModelKeys = (c: Context) =>
   handle(c, async () => {
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const keys = await modelKeysService.listModelKeys(db, c.get('userId'))
     return ok(c, keys)
   })
@@ -28,7 +28,7 @@ export const handleCreateModelKey = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, createModelKeySchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const key = await modelKeysService.createModelKey(db, c.get('userId'), body.data, c.env.MODEL_KEY_ENCRYPTION_KEY)
     return ok(c, key, 201)
   })
@@ -37,7 +37,7 @@ export const handleDeleteModelKey = (c: Context) =>
   handle(c, async () => {
     const keyId = idGuard(c.req.param('id'))
     if (!keyId) return badParam(c)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await modelKeysService.deleteModelKey(db, c.get('userId'), keyId)
   })
 

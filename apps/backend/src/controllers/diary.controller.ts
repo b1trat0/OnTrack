@@ -67,7 +67,7 @@ export const handleListDiary = (c: Context) =>
   handle(c, async () => {
     const query = validateQuery(c, listQuerySchema)
     if (!query.ok) return query.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const result = await diaryService.listDiary(db, c.get('userId'), query.data)
     return ok(c, result)
   })
@@ -76,7 +76,7 @@ export const handleCreateDiary = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, createDiarySchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const entry = await diaryService.createDiary(db, c.get('userId'), body.data)
     return ok(c, entry, 201)
   })
@@ -85,7 +85,7 @@ export const handleUnlockDiary = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, unlockDiarySchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const entry = await diaryService.unlockDiary(
       db,
       c.get('userId'),
@@ -102,7 +102,7 @@ export const handleUpdateDiary = (c: Context) =>
     const body = await validateBody(c, updateDiarySchema)
     if (!body.ok) return body.response
     const { password, ...patch } = body.data
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const entry = await diaryService.updateDiary(db, c.get('userId'), entryId, patch, password)
     return ok(c, entry)
   })
@@ -113,7 +113,7 @@ export const handleDeleteDiary = (c: Context) =>
     if (!entryId) return badParam(c)
     const body = await validateBody(c, deleteDiarySchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await diaryService.deleteDiary(db, c.get('userId'), entryId, body.data.password)
   })
 

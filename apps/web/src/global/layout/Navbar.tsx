@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { HelpCircle, LogOut, Menu, Settings, Sparkles } from 'lucide-react'
+import { HelpCircle, LogOut, Menu, Search, Settings, Sparkles } from 'lucide-react'
 import { ThemeSwitcher } from '../ui/ThemeSwitcher'
 import { useUserStore } from '../stores/useUserStore'
+import { menuKeyDown, useEscape } from '../lib/menu'
+import { NotificationCentre } from '../../features/notifications/NotificationCentre'
 
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -12,18 +14,29 @@ function initialsFor(name: string): string {
 }
 
 const FALLBACK_PROFILE = {
-  name: 'Vinit',
-  email: 'vinit@ontrack.app',
-  initials: 'VN',
+  name: 'Your account',
+  email: '',
+  initials: '··',
 }
 
-export function Navbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggleMenu: () => void }) {
+export function Navbar({
+  menuOpen,
+  onToggleMenu,
+  onOpenSearch,
+}: {
+  menuOpen: boolean
+  onToggleMenu: () => void
+  onOpenSearch: () => void
+}) {
   const [open, setOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
   const signOut = useUserStore((state) => state.signOut)
+
+  useEscape(open, () => setOpen(false))
+  useEscape(helpOpen, () => setHelpOpen(false))
 
   const profile = user
     ? { name: user.name, email: user.email, initials: initialsFor(user.name) }
@@ -47,13 +60,26 @@ export function Navbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
       </button>
 
       <NavLink to="/" onClick={closeAll} className="hidden shrink-0 items-center gap-2.5 md:flex">
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-(--accent) text-white shadow-sm transition-transform duration-200 hover:scale-105">
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-(--accent) text-(--on-accent) shadow-sm transition-transform duration-200 hover:scale-105">
           <Sparkles size={18} />
         </span>
         <span className="hidden text-lg font-bold tracking-tight sm:block">OnTrack</span>
       </NavLink>
 
       <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <NotificationCentre />
+
+        <button
+          onClick={onOpenSearch}
+          aria-label="Search OnTrack (Ctrl+K)"
+          title="Search (Ctrl+K)"
+          className="flex items-center gap-2 rounded-xl border border-(--border) bg-(--surface) px-2.5 py-1.5 text-sm text-(--text-muted) transition hover:bg-(--surface-2) hover:text-(--text)"
+        >
+          <Search size={15} />
+          <span className="hidden lg:block">Search</span>
+          <kbd className="hidden rounded border border-(--border) px-1 text-[10px] lg:block">⌘K</kbd>
+        </button>
+
         <ThemeSwitcher />
 
         <div className="relative">
@@ -67,9 +93,14 @@ export function Navbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
           {helpOpen ? (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setHelpOpen(false)} />
-              <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-(--border) bg-(--surface) p-2 shadow-xl">
+              <div
+                role="menu"
+                onKeyDown={menuKeyDown}
+                className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-(--border) bg-(--surface) p-2 shadow-xl"
+              >
                 <p className="px-3 py-2 text-xs font-semibold text-(--text-muted)">Help</p>
                 <button
+                  role="menuitem"
                   onClick={() => {
                     closeAll()
                     navigate('/calendar')
@@ -80,6 +111,7 @@ export function Navbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
                   Get oriented in Calendar
                 </button>
                 <button
+                  role="menuitem"
                   onClick={() => {
                     closeAll()
                     navigate('/timer')
@@ -111,6 +143,7 @@ export function Navbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
               <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
               <div
                 role="menu"
+                onKeyDown={menuKeyDown}
                 className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-(--border) bg-(--surface) p-2 shadow-xl"
               >
                 <div className="flex items-center gap-3 px-3 py-3">
@@ -125,12 +158,14 @@ export function Navbar({ menuOpen, onToggleMenu }: { menuOpen: boolean; onToggle
                 <div className="my-1 h-px bg-(--border)" />
                 <button
                   role="menuitem"
-                  disabled
-                  title="Profile is not set up yet — coming soon"
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-(--text-muted) opacity-60"
+                  onClick={() => {
+                    closeAll()
+                    navigate('/settings')
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-(--text) transition-all duration-150 hover:bg-(--surface-2) active:scale-[0.98]"
                 >
                   <Settings size={16} />
-                  Profile settings
+                  Account settings
                 </button>
                 <button
                   role="menuitem"

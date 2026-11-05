@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Check, Palette } from 'lucide-react'
 import { THEMES } from '../theme/themes'
 import { useTheme } from '../theme/useTheme'
+import { menuKeyDown, useEscape } from '../lib/menu'
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme()
@@ -9,6 +10,8 @@ export function ThemeSwitcher() {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const current = THEMES.find((meta) => meta.id === theme) ?? THEMES[0]
+
+  useEscape(open, () => setOpen(false))
 
   useEffect(() => {
     if (!open) return
@@ -39,6 +42,7 @@ export function ThemeSwitcher() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
             role="listbox"
+            onKeyDown={menuKeyDown}
             className="absolute right-0 z-50 mt-2 w-72 rounded-2xl border border-(--border) bg-(--surface) p-2 shadow-xl"
           >
             <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-(--text-muted)">
