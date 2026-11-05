@@ -160,15 +160,19 @@ export const useNotesStore = create<NotesState>()(
       ensureLoaded: async () => {
         if (get().loadStatus === 'loading' || get().loadStatus === 'loaded') return
         set({ loadStatus: 'loading' })
+        const epoch = get().epoch
         try {
-          const epoch = get().epoch
           const fetched = await fetchBoard()
           const { board, resets } = reconcileDailyBoard(fetched)
           if (get().epoch === epoch) set({ board, loadStatus: 'loaded' })
           if (resets.length > 0) void syncDailyResets(resets)
         } catch (error) {
-          set({ loadStatus: 'error' })
+          if (get().epoch === epoch) set({ loadStatus: 'error' })
           pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+            set({ loadStatus: 'idle' })
+          }
         }
       },
 

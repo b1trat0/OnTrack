@@ -88,6 +88,10 @@ export const useCalendarStore = create<CalendarState>()(
         } catch (error) {
           if (get().epoch === epoch) set({ loadStatus: 'error' })
           pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+            set({ loadStatus: 'idle' })
+          }
         }
       },
 

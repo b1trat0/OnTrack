@@ -18,8 +18,14 @@ export function DiaryEntryPage() {
   const { id } = useParams<{ id?: string }>()
   const navigate = useNavigate()
   const entries = useDiaryStore((state) => state.entries)
+  const loadStatus = useDiaryStore((state) => state.loadStatus)
+  const ensureLoaded = useDiaryStore((state) => state.ensureLoaded)
   const addEntry = useDiaryStore((state) => state.addEntry)
   const updateEntry = useDiaryStore((state) => state.updateEntry)
+
+  useEffect(() => {
+    void ensureLoaded()
+  }, [ensureLoaded])
 
   const entry: DiaryEntry | null = id ? entries.find((item) => item.id === id) ?? null : null
 
@@ -34,6 +40,19 @@ export function DiaryEntryPage() {
   const [hideEntry, setHideEntry] = useState(entry?.hidden ?? false)
 
   const contentRef = useRef<HTMLTextAreaElement>(null)
+
+  // A direct link (or a fresh device) can mount before the entry is loaded, and
+  // a hidden entry only gains its content after unlock. Re-hydrate the form when
+  // the server copy changes so saving cannot overwrite real content with "".
+  useEffect(() => {
+    if (!entry) return
+    setDate(entry.date)
+    setTitle(entry.title)
+    setMood(entry.mood)
+    setContent(entry.content)
+    setTagsText(entry.tags.join(', '))
+    setHideEntry(entry.hidden)
+  }, [entry?.id, entry?.updatedAt])
 
   const grow = () => {
     const el = contentRef.current
@@ -157,7 +176,11 @@ export function DiaryEntryPage() {
         </p>
       ) : null}
 
-      {id && !entry ? (
+      {id && !entry && (loadStatus === 'idle' || loadStatus === 'loading') ? (
+        <Card className="grid place-items-center gap-3 p-14 text-center">
+          <p className="text-sm text-(--text-muted)">Loading entry…</p>
+        </Card>
+      ) : id && !entry ? (
         <Card className="grid place-items-center gap-3 p-14 text-center">
           <p className="text-sm text-(--text-muted)">This entry isn’t loaded right now.</p>
           <Button variant="ghost" onClick={goBack}>

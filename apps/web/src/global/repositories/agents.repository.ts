@@ -166,11 +166,20 @@ export async function confirmActionItems(items: AgentActionItem[]): Promise<Conf
   })
 }
 
-export async function listRuns(agentId: string, limit?: number): Promise<AgentRunDto[]> {
+export type AgentRunListDto = {
+  runs: AgentRunDto[]
+  hasMore: boolean
+}
+
+export async function listRuns(
+  agentId: string,
+  opts: { limit?: number; offset?: number } = {}
+): Promise<AgentRunListDto> {
   const params = new URLSearchParams()
-  if (limit !== undefined) params.set('limit', String(limit))
+  if (opts.limit !== undefined) params.set('limit', String(opts.limit))
+  if (opts.offset !== undefined) params.set('offset', String(opts.offset))
   const qs = params.toString() ? `?${params.toString()}` : ''
-  return api<AgentRunDto[]>(`/api/agents/${encodeURIComponent(agentId)}/runs${qs}`)
+  return api<AgentRunListDto>(`/api/agents/${encodeURIComponent(agentId)}/runs${qs}`)
 }
 
 export async function listAgentTools(agentId: string): Promise<AgentToolDto[]> {

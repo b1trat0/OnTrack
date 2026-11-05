@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bot, Brain, Bell, CalendarClock, Coffee, Feather, Inbox, Mail, Newspaper, Plus, Puzzle, Search, ShieldCheck, Sparkles, Trash2, Zap, Play, Loader2, Clock } from 'lucide-react'
+import { Bot, Brain, Bell, CalendarClock, Coffee, Feather, History, Inbox, Mail, Newspaper, Plus, Puzzle, Search, ShieldCheck, Sparkles, Trash2, Zap, Play, Loader2, Clock } from 'lucide-react'
 import type { Agent, AgentTemplate } from '../../global/stores/useAgentsStore'
 import { useAgentsStore } from '../../global/stores/useAgentsStore'
 import { useAgentMessagesStore } from '../../global/stores/useAgentMessagesStore'
@@ -9,11 +9,13 @@ import { AgentEditor } from './AgentEditor'
 import { TemplateGallery } from './TemplateGallery'
 import { AgentInbox } from './AgentInbox'
 import { RunConfirmModal } from './RunConfirmModal'
+import { RunHistory } from './RunHistory'
 import { describeWrittenDestinations, getDestination } from './output-destinations'
 import type { AgentActionItem } from '../../global/repositories/agents.repository'
 import { Card } from '../../global/ui/Card'
 import { Button } from '../../global/ui/Button'
 import { IconButton } from '../../global/ui/IconButton'
+import { Modal } from '../../global/ui/Modal'
 
 export const AGENT_ICONS = {
   brain: Brain,
@@ -65,6 +67,7 @@ export function AgentsPage() {
   const [templateForEditor, setTemplateForEditor] = useState<AgentTemplate | null>(null)
   const [creating, setCreating] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [historyId, setHistoryId] = useState<string | null>(null)
   const [pendingRun, setPendingRun] = useState<{ agentName: string; items: AgentActionItem[] } | null>(null)
 
   useEffect(() => {
@@ -258,6 +261,7 @@ export function AgentsPage() {
                       </div>
                       <div className="flex gap-1">
                         <IconButton icon={Puzzle} label="Edit agent" onClick={() => { setTemplateForEditor(null); setEditing(agent) }} />
+                        <IconButton icon={History} label="View run history" onClick={() => setHistoryId(agent.id)} />
                         <IconButton
                           icon={Trash2}
                           label={deletingId === agent.id ? 'Click again to confirm' : 'Delete agent'}
@@ -381,6 +385,15 @@ export function AgentsPage() {
             onCancel={() => setPendingRun(null)}
             onDone={() => setPendingRun(null)}
           />
+
+          <Modal
+            open={historyId !== null}
+            onClose={() => setHistoryId(null)}
+            title={`Run history${historyId ? ` · ${agents.find((agent) => agent.id === historyId)?.name ?? 'Agent'}` : ''}`}
+            width="max-w-2xl"
+          >
+            {historyId ? <RunHistory agentId={historyId} /> : null}
+          </Modal>
         </>
       )}
     </div>

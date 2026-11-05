@@ -5,11 +5,9 @@ import {
   createAgent as createAgentReq,
   deleteAgent as deleteAgentReq,
   listAgents as listAgentsReq,
-  listAgentTools,
   runAgent as runAgentReq,
   updateAgent as updateAgentReq,
   type AgentDto,
-  type AgentToolDto,
   type AgentActionItem,
   type CreateAgentInput,
   type OutputDestination,
@@ -169,27 +167,20 @@ export const useAgentsStore = create<AgentsStore>()(
         const { loadStatus } = get()
         if (loadStatus === 'loading' || loadStatus === 'loaded') return
         set({ loadStatus: 'loading' })
+        const epoch = get().epoch
         try {
-          const epoch = get().epoch
           const dtos = await listAgentsReq()
           if (get().epoch !== epoch) return
-          const toolsMap = new Map<string, AgentToolDto[]>()
-          const agents = await Promise.all(
-            dtos.map(async (dto) => {
-              try {
-                const tools = await listAgentTools(dto.id)
-                toolsMap.set(dto.id, tools)
-              } catch {
-                // tools are optional, continue without them
-              }
-              return toAgent({ ...dto, tools: toolsMap.get(dto.id) ?? dto.tools })
-            })
-          )
-          if (get().epoch !== epoch) return
-          set({ agents, loadStatus: 'loaded' })
+          // GET /api/agents already includes tools. Re-fetching per agent was an
+          // N+1 that delayed the whole page behind one request per agent.
+          set({ agents: dtos.map(toAgent), loadStatus: 'loaded' })
         } catch (error) {
-          if (get().loadStatus === 'loading') set({ loadStatus: 'error' })
+          if (get().epoch === epoch) set({ loadStatus: 'error' })
           pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+            set({ loadStatus: 'idle' })
+          }
         }
       },
 

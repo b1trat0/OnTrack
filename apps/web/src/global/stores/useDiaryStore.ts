@@ -100,6 +100,10 @@ export const useDiaryStore = create<DiaryStore>()(
         } catch (error) {
           if (get().epoch === expected) set({ loadStatus: 'error' })
           pushSyncError(error)
+        } finally {
+          if (get().loadStatus === 'loading' && get().epoch !== expected) {
+            set({ loadStatus: 'idle' })
+          }
         }
       }
 
@@ -117,8 +121,8 @@ export const useDiaryStore = create<DiaryStore>()(
         ensureLoaded: async () => {
           if (get().loadStatus === 'loading' || get().loadStatus === 'loaded') return
           set({ loadStatus: 'loading' })
+          const epoch = get().epoch
           try {
-            const epoch = get().epoch
             const first = await loadDiary(null, 0, 1)
             if (get().epoch !== epoch) return
             if (first.entries.length > 0) {
@@ -133,8 +137,12 @@ export const useDiaryStore = create<DiaryStore>()(
               set({ loadStatus: 'loaded' })
             }
           } catch (error) {
-            set({ loadStatus: 'error' })
+            if (get().epoch === epoch) set({ loadStatus: 'error' })
             pushSyncError(error)
+          } finally {
+            if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+              set({ loadStatus: 'idle' })
+            }
           }
         },
 
@@ -159,6 +167,10 @@ export const useDiaryStore = create<DiaryStore>()(
           } catch (error) {
             if (get().epoch === expected) set({ loadStatus: 'error' })
             pushSyncError(error)
+          } finally {
+            if (get().loadStatus === 'loading' && get().epoch !== expected) {
+              set({ loadStatus: 'idle' })
+            }
           }
         },
 
@@ -179,6 +191,10 @@ export const useDiaryStore = create<DiaryStore>()(
           } catch (error) {
             if (get().epoch === expected) set({ loadStatus: 'error' })
             pushSyncError(error)
+          } finally {
+            if (get().loadStatus === 'loading' && get().epoch !== expected) {
+              set({ loadStatus: 'idle' })
+            }
           }
         },
 
