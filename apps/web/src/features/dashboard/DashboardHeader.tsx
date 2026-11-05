@@ -32,7 +32,7 @@ export function DashboardHeader({ onOpenApp, onClose }: DashboardHeaderProps) {
 
   return (
     <header className="mb-2 flex select-none items-center gap-2 [-webkit-app-region:drag]">
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-(--accent) text-white">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-(--accent) text-(--on-accent)">
         <Sparkles size={14} />
       </span>
       <div className="min-w-0 leading-tight">

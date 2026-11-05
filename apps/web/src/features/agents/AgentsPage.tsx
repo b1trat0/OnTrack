@@ -207,7 +207,7 @@ export function AgentsPage() {
               <Inbox size={15} />
               Inbox
               {unreadCount > 0 ? (
-                <span className="grid h-4 min-w-[16px] place-items-center rounded-full bg-(--accent) px-1 text-[10px] font-bold text-white">
+                <span className="grid h-4 min-w-[16px] place-items-center rounded-full bg-(--accent) px-1 text-[10px] font-bold text-(--on-accent)">
                   {unreadCount}
                 </span>
               ) : null}

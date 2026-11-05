@@ -271,7 +271,7 @@ export function AgentEditor({ open, initial, template, onClose, onSave }: AgentE
                   onClick={() => togglePreference(pref)}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                     active
-                      ? 'bg-(--accent) text-white'
+                      ? 'bg-(--accent) text-(--on-accent)'
                       : 'bg-(--surface-2) text-(--text-muted) hover:bg-(--border)'
                   }`}
                 >

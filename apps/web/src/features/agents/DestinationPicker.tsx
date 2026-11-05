@@ -79,7 +79,7 @@ function DestinationOption({
       <span
         aria-hidden="true"
         className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border transition ${
-          isSelected ? 'border-(--accent) bg-(--accent) text-white' : 'border-(--border-strong)'
+          isSelected ? 'border-(--accent) bg-(--accent) text-(--on-accent)' : 'border-(--border-strong)'
         }`}
       >
         {isSelected ? (

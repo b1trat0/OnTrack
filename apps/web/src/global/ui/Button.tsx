@@ -12,7 +12,7 @@ const base =
   'disabled:opacity-50 disabled:pointer-events-none select-none'
 
 const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary: 'bg-(--accent) text-white hover:opacity-90 active:scale-[0.97] shadow-sm transition-all duration-200',
+  primary: 'bg-(--accent) text-(--on-accent) hover:opacity-90 active:scale-[0.97] shadow-sm transition-all duration-200',
   soft: 'bg-(--accent-soft) text-(--accent) hover:brightness-95 active:scale-[0.97] transition-all duration-200',
   ghost: 'text-(--text-muted) hover:text-(--text) hover:bg-(--surface-2) active:scale-[0.97] transition-all duration-200',
   danger: 'bg-(--danger) text-white hover:opacity-90 active:scale-[0.97] shadow-sm transition-all duration-200',

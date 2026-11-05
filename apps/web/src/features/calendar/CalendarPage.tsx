@@ -20,6 +20,7 @@ import { Button } from '../../global/ui/Button'
 import { Card } from '../../global/ui/Card'
 import { Modal } from '../../global/ui/Modal'
 import { DATE_KEY } from '../../global/lib/dates'
+import { menuKeyDown, useEscape } from '../../global/lib/menu'
 
 export function CalendarPage() {
   const [cursor, setCursor] = useState(() => new Date())
@@ -39,6 +40,8 @@ export function CalendarPage() {
   const [deleteTarget, setDeleteTarget] = useState<Appointment | null>(null)
   const agendaRef = useRef<HTMLDivElement>(null)
   const firstRender = useRef(true)
+
+  useEscape(addOpen, () => setAddOpen(false))
 
   const selectedKey = format(selected, DATE_KEY)
   const dayEntries = appointments
@@ -155,7 +158,7 @@ export function CalendarPage() {
                 >
                   <span
                     className={`self-start rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
-                      isToday(day) ? 'bg-(--accent) text-white' : 'text-(--text-muted)'
+                      isToday(day) ? 'bg-(--accent) text-(--on-accent)' : 'text-(--text-muted)'
                     }`}
                   >
                     {format(day, 'd')}
@@ -234,6 +237,7 @@ export function CalendarPage() {
                     <div className="fixed inset-0 z-40" onClick={() => setAddOpen(false)} />
                     <div
                       role="menu"
+                      onKeyDown={menuKeyDown}
                       className="absolute right-0 z-50 mt-2 w-48 rounded-2xl border border-(--border) bg-(--surface) p-2 shadow-xl"
                     >
                       <button

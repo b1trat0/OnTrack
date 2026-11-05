@@ -51,7 +51,7 @@ export function AgentWidget({ agent }: AgentWidgetProps) {
       </div>
 
       {unreadCount > 0 ? (
-        <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-(--accent) px-1.5 text-[10px] font-bold text-white">
+        <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-(--accent) px-1.5 text-[10px] font-bold text-(--on-accent)">
           {unreadCount}
         </span>
       ) : null}
