@@ -172,7 +172,7 @@ export type AgentRunListDto = {
 }
 
 export type AgentUsageDto = {
-  plan: 'beta'
+  plan: 'free' | 'pro' | 'teams' | 'industry'
   dailyRuns: number
   dailyRunLimit: number
   monthlyTokens: number
