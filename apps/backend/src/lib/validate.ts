@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Context } from 'hono'
 import { AppError, fail } from './http'
+import { requestLog } from './logger'
 
 export type Validation<T> = { ok: true; data: T } | { ok: false; response: Response }
 
@@ -52,7 +53,9 @@ export async function handle(
     return c.body(null, 204)
   } catch (error) {
     if (error instanceof AppError) return fail(c, error.code, error.message, error.status)
-    console.error('[ontrack] unhandled', error)
+    requestLog('error', 'unhandled_error', c.get('requestId'), {
+      message: error instanceof Error ? error.message : String(error),
+    })
     return fail(c, 'INTERNAL', 'Something went wrong', 500)
   }
 }

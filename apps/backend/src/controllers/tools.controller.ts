@@ -24,7 +24,7 @@ export const handleGetAgentTools = (c: Context) =>
   handle(c, async () => {
     const agentId = idGuard(c.req.param('id'))
     if (!agentId) return badParam(c)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const agentTools = await toolsService.getAgentTools(db, c.get('userId'), agentId)
     return ok(c, agentTools)
   })
@@ -37,7 +37,7 @@ export const handleUpdateAgentTool = (c: Context) =>
     if (!toolName) return badParam(c)
     const body = await validateBody(c, updateToolSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const agentTool = await toolsService.upsertAgentTool(db, c.get('userId'), agentId, toolName, body.data)
     return ok(c, agentTool)
   })

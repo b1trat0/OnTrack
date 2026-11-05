@@ -2,6 +2,7 @@ import { getCookie, setCookie } from 'hono/cookie'
 import type { Context } from 'hono'
 import { prismaClient } from '../db'
 import { ok } from '../lib/http'
+import { log } from '../lib/logger'
 import { AppError, handle } from '../lib/validate'
 import {
   GMAIL_STATE_TTL_SECONDS,
@@ -89,21 +90,23 @@ export const handleGmailCallback = async (c: Context) => {
 
     return c.redirect(agentsRedirect(env, 'connected'))
   } catch (error) {
-    console.error('[integrations] gmail callback failed:', (error as Error).message)
+    log('error', 'gmail_callback_failed', {
+      message: error instanceof Error ? error.message : String(error),
+    })
     return c.redirect(agentsRedirect(env, 'failed'))
   }
 }
 
 export const handleGmailStatus = (c: Context) =>
   handle(c, async () => {
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const account = await getIntegrationAccount(db, c.get('userId') as string)
     return ok(c, { isConnected: Boolean(account), email: account?.email ?? null })
   })
 
 export const handleDisconnectGmail = (c: Context) =>
   handle(c, async () => {
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const wasConnected = await disconnectGmail(db, c.get('userId') as string, c.env)
     return ok(c, { isConnected: false, wasConnected })
   })

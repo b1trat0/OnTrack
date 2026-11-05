@@ -43,7 +43,7 @@ export const handleListTasks = (c: Context) =>
   handle(c, async () => {
     const query = validateQuery(c, listQuerySchema)
     if (!query.ok) return query.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const tasks = await tasksService.listTasks(db, c.get('userId'), query.data.status)
     return ok(c, tasks)
   })
@@ -52,7 +52,7 @@ export const handleCreateTask = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, createTaskSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const task = await tasksService.createTask(db, c.get('userId'), body.data)
     return ok(c, task, 201)
   })
@@ -63,7 +63,7 @@ export const handleUpdateTask = (c: Context) =>
     if (!taskId) return badParam(c)
     const body = await validateBody(c, updateTaskSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const task = await tasksService.updateTask(db, c.get('userId'), taskId, body.data)
     return ok(c, task)
   })
@@ -74,7 +74,7 @@ export const handleMoveTask = (c: Context) =>
     if (!taskId) return badParam(c)
     const body = await validateBody(c, moveTaskSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const task = await tasksService.moveTask(db, c.get('userId'), taskId, body.data)
     return ok(c, task)
   })
@@ -83,7 +83,7 @@ export const handleDeleteTask = (c: Context) =>
   handle(c, async () => {
     const taskId = idGuard(c, c.req.param('id'))
     if (!taskId) return badParam(c)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await tasksService.deleteTask(db, c.get('userId'), taskId)
   })
 

@@ -1,4 +1,5 @@
 import Parser from 'rss-parser'
+import { log } from '../lib/logger'
 
 type HNStory = { title: string; url: string; score: number; by: string; time: number }
 type RedditStory = { title: string; url: string; score: number; author: string; created_utc: number }
@@ -76,7 +77,7 @@ export async function fetchNewsForAgent(
         results.push(...stories.map((s) => ({ ...s, source })))
       }
     } catch {
-      console.error(`[news] failed to fetch from ${source}`)
+      log('warn', 'news_fetch_failed', { source })
     }
   }
 

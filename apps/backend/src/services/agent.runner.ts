@@ -1,6 +1,7 @@
 import type { PrismaClient } from '../generated/prisma/client'
 import type { Env } from '../types'
 import { AppError } from '../lib/http'
+import { log } from '../lib/logger'
 import { decrypt } from '../lib/crypto'
 import { DEFAULT_BASE_URL, FALLBACK_MODEL, resolveBaseUrl } from '../lib/llm-providers'
 import {
@@ -90,7 +91,7 @@ async function gatherContext(
     try {
       result.news = await fetchNewsForAgent(newsSources, [], 15)
     } catch {
-      console.error('[runner] news fetch failed')
+      log('warn', 'agent_news_fetch_failed', { agentId })
     }
   }
 
@@ -103,7 +104,7 @@ async function gatherContext(
       try {
         result.emails = await fetchRecentEmails(accessToken, 24)
       } catch {
-        console.error('[runner] gmail fetch failed')
+        log('warn', 'agent_gmail_fetch_failed', { agentId })
       }
     }
   }

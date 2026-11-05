@@ -56,7 +56,7 @@ const updateAgentSchema = z
 
 export const handleListAgents = (c: Context) =>
   handle(c, async () => {
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const agents = await agentsService.listAgents(db, c.get('userId'))
     return ok(c, agents)
   })
@@ -65,7 +65,7 @@ export const handleGetAgent = (c: Context) =>
   handle(c, async () => {
     const agentId = idGuard(c.req.param('id'))
     if (!agentId) return badParam(c)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const agent = await agentsService.getAgent(db, c.get('userId'), agentId)
     return ok(c, agent)
   })
@@ -74,7 +74,7 @@ export const handleCreateAgent = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, createAgentSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const agent = await agentsService.createAgent(db, c.get('userId'), body.data)
     return ok(c, agent, 201)
   })
@@ -85,7 +85,7 @@ export const handleUpdateAgent = (c: Context) =>
     if (!agentId) return badParam(c)
     const body = await validateBody(c, updateAgentSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const agent = await agentsService.updateAgent(db, c.get('userId'), agentId, body.data)
     return ok(c, agent)
   })
@@ -94,7 +94,7 @@ export const handleDeleteAgent = (c: Context) =>
   handle(c, async () => {
     const agentId = idGuard(c.req.param('id'))
     if (!agentId) return badParam(c)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await agentsService.deleteAgent(db, c.get('userId'), agentId)
   })
 
@@ -102,7 +102,7 @@ export const handleRunAgent = (c: Context) =>
   handle(c, async () => {
     const agentId = idGuard(c.req.param('id'))
     if (!agentId) return badParam(c)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const cf = (c.req.raw as Request & { cf?: { timezone?: string } }).cf
     const result = await agentRunner.runAgent(
       db,
@@ -131,7 +131,7 @@ export const handleConfirmActions = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, confirmActionsSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const created = await createActionItems(db, c.get('userId'), body.data.items)
     return ok(c, { created })
   })
@@ -147,7 +147,7 @@ export const handleListRuns = (c: Context) =>
     if (!agentId) return badParam(c)
     const query = validateQuery(c, listRunsSchema)
     if (!query.ok) return query.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const result = await agentRunner.listAgentRuns(db, c.get('userId'), {
       ...query.data,
       agentId,
@@ -159,7 +159,7 @@ export const handleGetRun = (c: Context) =>
   handle(c, async () => {
     const runId = idGuard(c.req.param('runId'))
     if (!runId) return fail(c, 'VALIDATION', 'Invalid run id', 400)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const run = await agentRunner.getAgentRun(db, c.get('userId'), runId)
     return ok(c, run)
   })
@@ -169,7 +169,7 @@ const listTemplatesSchema = z.object({})
 export const handleListTemplates = (c: Context) =>
   handle(c, async () => {
     const { seedTemplates, listTemplates } = await import('../services/seed.service')
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await seedTemplates(db)
     const templates = await listTemplates(db)
     return ok(c, templates)

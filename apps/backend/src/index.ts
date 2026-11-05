@@ -14,6 +14,13 @@ import type { AppVariables, Env } from './types'
 
 const app = new Hono<{ Bindings: Env; Variables: AppVariables }>()
 
+app.use('/api/*', async (c, next) => {
+  const requestId = crypto.randomUUID()
+  c.set('requestId', requestId)
+  c.header('X-Request-Id', requestId)
+  await next()
+})
+
 function allowedOrigins(env: Env): string[] {
   const configured = (env.CORS_ORIGINS ?? '')
     .split(',')
@@ -42,6 +49,7 @@ app.use('/api/*', async (c, next) => {
     c.header('Vary', 'Origin')
     c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     c.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
+    c.header('Access-Control-Expose-Headers', 'X-Request-Id')
     c.header('Access-Control-Max-Age', '600')
   }
 
@@ -54,6 +62,10 @@ app.use('/api/*', async (c, next) => {
 })
 
 app.get('/', (c) => c.text('Hello Hono!'))
+
+app.get('/health', (c) =>
+  c.json({ status: 'ok', service: 'ontrack-api', time: new Date().toISOString() })
+)
 
 app.route('/api/auth', authRouter)
 app.route('/api/auth/gmail', integrationsRouter)

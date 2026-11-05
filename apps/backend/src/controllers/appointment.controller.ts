@@ -50,7 +50,7 @@ const updateAppointmentSchema = z
 
 export const handleListAppointments = (c: Context) =>
   handle(c, async () => {
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const appointments = await appointmentsService.listAppointments(db, c.get('userId'))
     return ok(c, appointments)
   })
@@ -59,7 +59,7 @@ export const handleCreateAppointment = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, appointmentSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const appointment = await appointmentsService.createAppointment(db, c.get('userId'), body.data)
     return ok(c, appointment, 201)
   })
@@ -70,7 +70,7 @@ export const handleUpdateAppointment = (c: Context) =>
     if (!appointmentId) return badParam(c)
     const body = await validateBody(c, updateAppointmentSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const appointment = await appointmentsService.updateAppointment(
       db,
       c.get('userId'),
@@ -84,7 +84,7 @@ export const handleDeleteAppointment = (c: Context) =>
   handle(c, async () => {
     const appointmentId = idGuard(c, c.req.param('id'))
     if (!appointmentId) return badParam(c)
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await appointmentsService.deleteAppointment(db, c.get('userId'), appointmentId)
   })
 
