@@ -89,6 +89,7 @@ export function PlansPage() {
       await startCheckout(interval)
     } catch (err) {
       pushToast({ title: 'Could not start checkout', message: toErrorMessage(err), level: 'error' })
+    } finally {
       setWorking(false)
     }
   }
@@ -99,6 +100,7 @@ export function PlansPage() {
       await openBillingPortal()
     } catch (err) {
       pushToast({ title: 'Could not open billing', message: toErrorMessage(err), level: 'error' })
+    } finally {
       setWorking(false)
     }
   }
