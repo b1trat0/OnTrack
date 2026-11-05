@@ -160,15 +160,16 @@ The app is installable from the browser; API writes still need connectivity. Web
 | `npm run dev` | web + desktop + backend |
 | `npm run build` | web → desktop → builder |
 | `npm run lint` | web + desktop ESLint |
-| `npm test` | Node regression suite |
+| `npm test` | architecture/regression guards |
+| `npm run test:unit` | Vitest unit + component tests |
+| `npm run test:api` | API integration against a `_test` Postgres DB |
+| `npm run test:e2e` | Playwright desktop + Pixel 5 flows |
+| `npm run test:all` | guards + unit + API |
+| `npm run typecheck` | web, desktop, and backend TypeScript |
 | `npm run format` | Prettier |
 
-There is no standalone typecheck script; `npm run build -w web` / `-w app` run `tsc`.
-Backend typecheck:
-
-```bash
-npx tsc --noEmit -p apps/backend/tsconfig.json
-```
+The full test strategy, test database setup, and CI required checks are in
+[`docs/TESTING.md`](docs/TESTING.md).
 
 ## Security model (short)
 
