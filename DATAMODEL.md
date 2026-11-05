@@ -165,11 +165,13 @@ Front sources:
 
 **Execution model (v2):** button-triggered only, no cron/streaming. `POST /api/agents/:id/run`
 compiles one full `RunResult` and returns it in a single response. Budget guards: max 50
-runs/day/user (429), in-flight concurrency lock per agent (409), per-run `maxTokens` clamped to
-8000 server-side. All external content is wrapped in `<untrusted_data>` tags before hitting the
-LLM; output JSON is validated by Zod. `draftOnly=true` is the default on every agent. The runner
-composes the system prompt from the agent's Markdown `description` (the `prompt` column is no
-longer used).
+runs/day/user computed in the request's Cloudflare timezone (`cf-timezone`, UTC fallback), a
+500,000-token monthly per-user cap (`BUDGET_EXCEEDED` 429), and a **database-backed** in-flight
+lock per agent (`AgentRun.lockKey`, unique; 409 on a concurrent run; stale locks older than
+15 minutes are reclaimed). Per-run `maxTokens` is clamped to 8000 server-side. All external
+content is wrapped in `<untrusted_data>` tags before hitting the LLM; output JSON is validated
+by Zod. `draftOnly=true` is the default on every agent. The runner composes the system prompt
+from the agent's Markdown `description` (the `prompt` column is no longer used).
 
 **Draft mode (enforced):** when `draftOnly=true`, the runner writes the run result to the
 **inbox only**. A configured `notes` or `calendar` destination becomes a proposal in
@@ -399,6 +401,7 @@ model AgentRun {
   userId     String
   agentId    String
   status     String   @default("running") // running | success | failed | skipped
+  lockKey    String?  @unique // agentId while running; null when finished
   inputSnap  String?
   outputSnap String?
   toolCalls  String?
@@ -453,8 +456,9 @@ model Reminder {
 }
 ```
 
-Email/PIN verification tokens are stored **plaintext** (`token`); the refresh token is stored
-as a **SHA-256 digest** (it is the long-lived credential, so it never sits in the DB readable).
+Verification, reset, and refresh tokens are stored as **SHA-256 digests**; only the raw token
+in the email link/response can be used. A database leak therefore does not yield a usable
+verification or reset link.
 
 ---
 
@@ -623,7 +627,7 @@ creation falls back to `['message']` rather than storing a set that discards eve
 | GET    | `/api/tools/available`            | —                              | `{ data: ToolDefinition[] }` (14 tools, grouped by category) |
 | GET    | `/api/tools/agents/:id/tools`     | —                              | `{ data: AgentTool[] }`                   |
 | PATCH  | `/api/tools/agents/:id/tools/:toolName` | `{ enabled?, config? }`   | `{ data: AgentTool }` (upsert)            |
-| GET    | `/api/agents/messages`            | `?offset&limit&unread=`        | `{ data: { messages, hasMore } }`         |
+| GET    | `/api/agents/messages`            | `?offset&limit&unread=`        | `{ data: { messages, hasMore, unreadCount } }` |
 | PATCH  | `/api/agents/messages/:id`        | `{ read: true }`               | `{ data: AgentMessage }`                  |
 | DELETE | `/api/agents/messages/:id`        | —                              | `204`                                     |
 | GET    | `/api/runs/:runId`                | —                              | `{ data: RunListItem }`                   |
@@ -694,6 +698,8 @@ with no mail in it.
   `prisma migrate dev` is non-interactive-unfriendly; hand-written migrations + `migrate deploy`
   when needed. `20261105090000_saas_hardening_p0` is **additive only**: it adds
   `User.avatarUrl`, the `Agent(userId)` index, and `Appointment.createdAt/updatedAt`.
+  `20261105100000_agent_run_lock` adds `AgentRun.lockKey` plus its unique index for the
+  cross-isolate run lock.
 - Env bindings in `wrangler.jsonc`: `WEB_URL` (var), plus secrets in `.dev.vars`:
   `DATABASE_URL`, `JWT_SECRET`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`,
   `MODEL_KEY_ENCRYPTION_KEY`, `INTEGRATION_ENCRYPTION_KEY`, `GOOGLE_CLIENT_ID`,
