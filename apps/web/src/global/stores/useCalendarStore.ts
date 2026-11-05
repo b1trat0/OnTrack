@@ -1,9 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { format } from 'date-fns'
 import { isAuthError, toErrorMessage } from '../lib/api'
 import { uid } from '../lib/id'
-import { DATE_KEY, todayKey } from '../lib/dates'
 import {
   createAppointment as createAppointmentRequest,
   deleteAppointment as deleteAppointmentRequest,
@@ -60,45 +58,6 @@ type CalendarStore = {
   removeAppointment: (id: string) => void
 }
 
-const daysFromNow = (days: number) => {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-  return format(date, DATE_KEY)
-}
-
-const seed = (): Appointment[] => [
-  {
-    id: uid(),
-    kind: 'appointment',
-    title: 'Morning meds',
-    date: todayKey(),
-    startTime: '09:00',
-    endTime: '09:10',
-    color: '#0ea5e9',
-    notes: 'Take with breakfast.',
-  },
-  {
-    id: uid(),
-    kind: 'appointment',
-    title: 'Therapy call',
-    date: todayKey(),
-    startTime: '15:00',
-    endTime: '15:45',
-    color: '#8b5cf6',
-    notes: '',
-  },
-  {
-    id: uid(),
-    kind: 'appointment',
-    title: 'Gym',
-    date: daysFromNow(1),
-    startTime: '09:30',
-    endTime: '10:15',
-    color: '#10b981',
-    notes: 'Leg day.',
-  },
-]
-
 function pushSyncError(error: unknown): void {
   if (isAuthError(error)) return
   useToastStore.getState().push({
@@ -111,30 +70,23 @@ function pushSyncError(error: unknown): void {
 export const useCalendarStore = create<CalendarState>()(
   persist(
     (set, get) => ({
-      appointments: seed(),
+      appointments: [],
       loadStatus: 'idle',
       epoch: 0,
 
       ensureLoaded: async () => {
         if (get().loadStatus === 'loading' || get().loadStatus === 'loaded') return
         set({ loadStatus: 'loading' })
+        const epoch = get().epoch
         try {
           const remote = await listAppointments()
-          if (remote.length === 0) {
-            const local = get().appointments
-            if (local.length > 0) {
-              const created = await Promise.all(
-                local.map((appointment) => createAppointmentRequest(appointment))
-              )
-              set({ appointments: created, loadStatus: 'loaded' })
-            } else {
-              set({ appointments: [], loadStatus: 'loaded' })
-            }
-          } else {
-            set({ appointments: remote, loadStatus: 'loaded' })
-          }
+          if (get().epoch !== epoch) return
+          // The server is the only source of truth. Local rows are never
+          // uploaded here: that was how a previous account's calendar leaked
+          // into the next account on the same device.
+          set({ appointments: remote, loadStatus: 'loaded' })
         } catch (error) {
-          set({ loadStatus: 'error' })
+          if (get().epoch === epoch) set({ loadStatus: 'error' })
           pushSyncError(error)
         }
       },

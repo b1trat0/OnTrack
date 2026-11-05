@@ -127,31 +127,9 @@ export const useDiaryStore = create<DiaryStore>()(
                 entries: mergeEntries(state.entries, [latest]),
                 loadStatus: 'loaded',
               }))
-              return
-            }
-            const legacy = get().entries
-            if (legacy.length > 0) {
-              await Promise.all(
-                legacy.map((entry) =>
-                  createDiary({
-                    id: entry.id,
-                    date: entry.date,
-                    title: entry.title,
-                    content: entry.content,
-                    mood: entry.mood,
-                    tags: entry.tags,
-                    hidden: entry.hidden,
-                    createdAt: entry.createdAt,
-                  })
-                )
-              )
-              const afterSeed = await loadDiary(null, 0, 1)
-              if (get().epoch !== epoch) return
-              set((state) => ({
-                entries: mergeEntries(state.entries, afterSeed.entries.map(toDiaryEntry)),
-                loadStatus: 'loaded',
-              }))
             } else {
+              // Never upload the previous account's cache as a "seed". The
+              // server is the source of truth; an empty account stays empty.
               set({ loadStatus: 'loaded' })
             }
           } catch (error) {

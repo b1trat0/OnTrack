@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { clearSession, SESSION_EXPIRED_EVENT_NAME } from '../lib/session'
+import { syncActiveUser } from '../lib/userData'
 import {
   restoreUser,
   signIn as signInRequest,
@@ -8,6 +9,7 @@ import {
   signUp as signUpRequest,
   type AppUser,
 } from '../repositories/auth.repository'
+import { resetUserStores } from './resetStores'
 
 export type AuthStatus = 'restoring' | 'signedIn' | 'signedOut'
 
@@ -30,6 +32,7 @@ export const useUserStore = create<UserStore>()(
         set({ status: 'restoring' })
         try {
           const user = await restoreUser()
+          if (syncActiveUser(user.id)) resetUserStores()
           set({ user, status: 'signedIn' })
         } catch {
           set({ user: null, status: 'signedOut' })
@@ -37,16 +40,24 @@ export const useUserStore = create<UserStore>()(
       },
       signUp: async (input) => {
         await signUpRequest(input)
+        syncActiveUser(null)
+        resetUserStores()
         set({ user: null, status: 'signedOut' })
       },
       signIn: async (email, password) => {
         const session = await signInRequest(email, password)
+        if (syncActiveUser(session.user.id)) resetUserStores()
         set({ user: session.user, status: 'signedIn' })
       },
       signOut: async () => {
-        await signOutRequest()
-        clearSession()
-        set({ user: null, status: 'signedOut' })
+        try {
+          await signOutRequest()
+        } finally {
+          clearSession()
+          syncActiveUser(null)
+          resetUserStores()
+          set({ user: null, status: 'signedOut' })
+        }
       },
       setUser: (user) => set({ user }),
     }),
@@ -60,18 +71,31 @@ export const useUserStore = create<UserStore>()(
  */
 export function subscribeAuthEvents(): void {
   window.addEventListener(SESSION_EXPIRED_EVENT_NAME, () => {
+    syncActiveUser(null)
+    resetUserStores()
     useUserStore.setState({ user: null, status: 'signedOut' })
   })
   window.addEventListener('storage', (event) => {
-    if (event.key === 'ontrack-user') {
+    if (event.key !== 'ontrack-user') return
+    try {
       const stored = localStorage.getItem('ontrack-user')
       const parsed = stored ? JSON.parse(stored).state : null
+      const nextUser: AppUser | null = parsed?.user ?? null
+      const currentUser = useUserStore.getState().user
+      // Another window may have switched accounts. localStorage is shared, but
+      // this window's Zustand state is not, so reset it explicitly.
+      if ((currentUser?.id ?? null) !== (nextUser?.id ?? null)) {
+        resetUserStores()
+      }
+      syncActiveUser(nextUser?.id ?? null)
       useUserStore.setState({
-        user: parsed?.user ?? null,
-        // The value was just written by another window signing in/out, so the
-        // stored user IS the current auth truth — don't keep a stale local status.
-        status: parsed?.user ? 'signedIn' : 'signedOut',
+        user: nextUser,
+        status: nextUser ? 'signedIn' : 'signedOut',
       })
+    } catch {
+      localStorage.removeItem('ontrack-user')
+      resetUserStores()
+      useUserStore.setState({ user: null, status: 'signedOut' })
     }
   })
 }
