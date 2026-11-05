@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { clearSession, SESSION_EXPIRED_EVENT_NAME } from '../lib/session'
 import { syncActiveUser } from '../lib/userData'
 import {
+  deleteAccount as deleteAccountRequest,
   restoreUser,
   signIn as signInRequest,
   signOut as signOutRequest,
@@ -20,6 +21,7 @@ export type UserStore = {
   signUp: (input: { email: string; name: string; password: string }) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  deleteAccount: (password: string) => Promise<void>
   setUser: (user: AppUser) => void
 }
 
@@ -58,6 +60,13 @@ export const useUserStore = create<UserStore>()(
           resetUserStores()
           set({ user: null, status: 'signedOut' })
         }
+      },
+      deleteAccount: async (password) => {
+        await deleteAccountRequest(password)
+        clearSession()
+        syncActiveUser(null)
+        resetUserStores()
+        set({ user: null, status: 'signedOut' })
       },
       setUser: (user) => set({ user }),
     }),

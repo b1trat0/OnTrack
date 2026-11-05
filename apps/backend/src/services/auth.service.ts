@@ -1,6 +1,7 @@
 import { compare, hash } from 'bcryptjs'
 import type { PrismaClient } from '../generated/prisma/client'
 import { AppError } from '../lib/http'
+import { log } from '../lib/logger'
 import { signAccessToken } from '../lib/jwt'
 import { digestToken, randomToken } from '../lib/tokens'
 import { createEmailSender, createEmailLinkBuilder, passwordResetEmailHtml, verificationEmailHtml } from './email.service'
@@ -126,7 +127,10 @@ export async function signup(
   try {
     await seedDefaultAgents(db, user.id)
   } catch (err) {
-    console.error('[ontrack] default agent seeding failed', err)
+    log('error', 'default_agent_seed_failed', {
+      userId: user.id,
+      message: err instanceof Error ? err.message : String(err),
+    })
   }
 
   const rawToken = randomToken()
@@ -140,7 +144,9 @@ export async function signup(
 
   const mailPromise = sendVerificationMail(input, { to: email, name: user.name, token: rawToken }).catch(
     (err) => {
-      console.error('[ontrack] verification email failed', err)
+      log('error', 'verification_email_failed', {
+        message: err instanceof Error ? err.message : String(err),
+      })
     }
   )
   // On Workers, awaiting the mail delays the response and a fire-and-forget
@@ -224,6 +230,48 @@ export async function changePassword(
     where: { id: userId },
     data: { passwordHash, refreshTokenDigest: null, refreshTokenExpiresAt: null },
   })
+}
+
+/** Full user-owned dataset for a JSON export. Secrets and key ciphertext are excluded. */
+export async function exportAccount(db: PrismaClient, userId: string) {
+  const user = await db.user.findUnique({ where: { id: userId } })
+  if (!user) throw new AppError('NOT_FOUND', 'User not found.', 404)
+
+  const [tasks, appointments, diaryEntries, agents, agentMessages, modelKeys] = await Promise.all([
+    db.task.findMany({ where: { userId }, orderBy: [{ status: 'asc' }, { position: 'asc' }] }),
+    db.appointment.findMany({ where: { userId }, orderBy: [{ date: 'asc' }, { startTime: 'asc' }] }),
+    db.diaryEntry.findMany({ where: { userId }, orderBy: [{ date: 'desc' }, { createdAt: 'desc' }] }),
+    db.agent.findMany({ where: { userId }, include: { tools: true } }),
+    db.agentMessage.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
+    db.modelKey.findMany({
+      where: { userId },
+      select: { id: true, provider: true, label: true, defaultModel: true, createdAt: true },
+    }),
+  ])
+
+  return {
+    exportedAt: new Date().toISOString(),
+    user: toSafeUser(user),
+    tasks,
+    appointments,
+    diaryEntries,
+    agents,
+    agentMessages,
+    modelKeys,
+  }
+}
+
+/** Deletes the account and every related row. Requires the current password. */
+export async function deleteAccount(
+  db: PrismaClient,
+  userId: string,
+  password: string
+): Promise<void> {
+  const user = await db.user.findUnique({ where: { id: userId } })
+  if (!user) throw new AppError('UNAUTHORIZED', 'Not authenticated.', 401)
+  const valid = await compare(password, user.passwordHash)
+  if (!valid) throw new AppError('INVALID_PASSWORD', 'Password is incorrect.', 403)
+  await db.user.delete({ where: { id: userId } })
 }
 
 export async function verifyEmail(db: PrismaClient, token: string): Promise<void> {

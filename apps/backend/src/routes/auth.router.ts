@@ -16,7 +16,9 @@ authRouter.post('/reset-password', authRateLimit, ctrl.handleResetPassword)
 authRouter.use('/me', authVerify)
 authRouter.get('/me', ctrl.handleMe)
 authRouter.patch('/me', ctrl.handleUpdateProfile)
+authRouter.delete('/me', authRateLimit, ctrl.handleDeleteAccount)
 authRouter.patch('/password', ctrl.handleChangePassword)
+authRouter.get('/export', authVerify, ctrl.handleExportAccount)
 authRouter.post('/signout', authVerify, ctrl.handleSignout)
 
 export default authRouter

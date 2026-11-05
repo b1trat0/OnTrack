@@ -32,6 +32,10 @@ const changePasswordSchema = z.object({
   newPassword: passwordSchema,
 })
 
+const deleteAccountSchema = z.object({
+  password: z.string().min(1).max(128),
+})
+
 const emailOnlySchema = z.object({ email: emailSchema })
 
 const resetPasswordSchema = z.object({
@@ -45,7 +49,7 @@ export const handleSignup = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, signupSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const waitUntil = (promise: Promise<unknown>): void => {
       try {
         c.executionCtx.waitUntil(promise)
@@ -68,7 +72,7 @@ export const handleSignin = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, signinSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const session = await authService.signin(db, { ...body.data, jwtSecret: c.env.JWT_SECRET })
     return ok(c, session)
   })
@@ -77,20 +81,20 @@ export const handleRefresh = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, refreshSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const session = await authService.refresh(db, { ...body.data, jwtSecret: c.env.JWT_SECRET })
     return ok(c, session)
   })
 
 export const handleSignout = (c: Context) =>
   handle(c, async () => {
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await authService.signout(db, c.get('userId'))
   })
 
 export const handleMe = (c: Context) =>
   handle(c, async () => {
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const user = await authService.me(db, c.get('userId'))
     return ok(c, user)
   })
@@ -99,7 +103,7 @@ export const handleUpdateProfile = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, updateProfileSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     const user = await authService.updateProfile(db, c.get('userId'), body.data)
     return ok(c, user)
   })
@@ -108,15 +112,30 @@ export const handleChangePassword = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, changePasswordSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await authService.changePassword(db, c.get('userId'), body.data)
+  })
+
+export const handleExportAccount = (c: Context) =>
+  handle(c, async () => {
+    const db = prismaClient(c.env)
+    const data = await authService.exportAccount(db, c.get('userId'))
+    return ok(c, data)
+  })
+
+export const handleDeleteAccount = (c: Context) =>
+  handle(c, async () => {
+    const body = await validateBody(c, deleteAccountSchema)
+    if (!body.ok) return body.response
+    const db = prismaClient(c.env)
+    await authService.deleteAccount(db, c.get('userId'), body.data.password)
   })
 
 export const handleVerifyEmail = (c: Context) =>
   handle(c, async () => {
     const query = validateQuery(c, verifyEmailQuerySchema)
     if (!query.ok) return query.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await authService.verifyEmail(db, query.data.token)
   })
 
@@ -124,7 +143,7 @@ export const handleResendVerification = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, emailOnlySchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await authService.resendVerificationEmail(db, {
       email: body.data.email,
       resendApiKey: c.env.RESEND_API_KEY,
@@ -137,7 +156,7 @@ export const handleForgotPassword = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, emailOnlySchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await authService.forgotPassword(db, {
       email: body.data.email,
       resendApiKey: c.env.RESEND_API_KEY,
@@ -150,6 +169,6 @@ export const handleResetPassword = (c: Context) =>
   handle(c, async () => {
     const body = await validateBody(c, resetPasswordSchema)
     if (!body.ok) return body.response
-    const db = prismaClient(c.env.DATABASE_URL)
+    const db = prismaClient(c.env)
     await authService.resetPassword(db, body.data)
   })
