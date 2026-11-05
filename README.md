@@ -20,9 +20,11 @@ summarize it, and deliver the result to your inbox, notes, or calendar.
   proposed tasks/events/notes.
 - **Desktop** — Electron tray, main window, always-on-top dashboard wedge window.
 - **Accounts** — email verification, refresh sessions, password reset/change, profile,
-  JSON export, and account deletion.
+  JSON export, account deletion, Stripe checkout/portal, and plan-aware quotas.
 - **UX** — four themes, command palette (`Ctrl/Cmd+K`), onboarding, notification centre,
   keyboard-accessible dialogs/menus, reduced-motion support.
+- **PWA** — installable manifest, service worker/offline shell, safe-area layout, and
+  an honest offline banner. Web push is the next mobile step.
 
 ## Stack
 
@@ -87,6 +89,13 @@ INTEGRATION_ENCRYPTION_KEY="64-hex-characters"
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 GOOGLE_REDIRECT_URI="http://localhost:7891/api/auth/gmail/callback"
+STRIPE_SECRET_KEY=""
+STRIPE_WEBHOOK_SECRET=""
+STRIPE_PRICE_PRO_MONTHLY=""
+STRIPE_PRICE_PRO_YEARLY=""
+PRO_PRICE_MONTHLY="8"
+PRO_PRICE_YEARLY="80"
+BILLING_CURRENCY="usd"
 ```
 
 Generate the two encryption keys with a CSPRNG, for example:
@@ -130,6 +139,20 @@ Packaged builds load from `file://`; set `VITE_API_BASE` to the deployed API ori
 (see `apps/web/.env.example`) or the app will refuse to make API calls. Gmail OAuth
 for packaged builds still needs a deployed `WEB_URL` and a callback strategy.
 
+### 4. Billing (optional)
+
+Billing is disabled until Stripe is configured. Create two recurring prices (Pro monthly
+and yearly), then set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
+`STRIPE_PRICE_PRO_MONTHLY`, and `STRIPE_PRICE_PRO_YEARLY`. The display amounts come from
+`PRO_PRICE_MONTHLY` / `PRO_PRICE_YEARLY`. Webhook endpoint:
+`POST /api/billing/webhook`. See `docs/DEPLOYMENT.md` for the Stripe CLI loop.
+
+### 5. PWA
+
+`npm run build -w web` emits `manifest.webmanifest`, `sw.js`, and an offline shell.
+The app is installable from the browser; API writes still need connectivity. Web push
+(VAPID + subscription table) is the next step.
+
 ## Scripts
 
 | Command | Purpose |
@@ -161,6 +184,8 @@ npx tsc --noEmit -p apps/backend/tsconfig.json
 - External agent content is wrapped in `<untrusted_data>` and truncated before the LLM.
 - CORS is an allowlist; credential endpoints are rate-limited (best-effort per isolate
   until a distributed limiter lands).
+- Stripe webhooks verify the signature and dedupe by event id; card data never touches
+  OnTrack.
 - Electron runs with `nodeIntegration:false`, `contextIsolation:true`, `sandbox:true`,
   and a CSP. Prefer moving the web refresh token to an httpOnly cookie as the next step.
 

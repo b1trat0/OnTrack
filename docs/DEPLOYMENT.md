@@ -133,6 +133,40 @@ npm run build
 - The desktop app requires a reachable HTTPS API origin; `http://127.0.0.1:7891` is for
   local development only.
 
+## 7.5 Stripe billing
+
+1. Create two recurring prices in Stripe (Pro monthly, Pro yearly).
+2. Set the Worker secrets:
+   `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_MONTHLY`,
+   `STRIPE_PRICE_PRO_YEARLY`.
+3. Set public display values: `PRO_PRICE_MONTHLY`, `PRO_PRICE_YEARLY`,
+   `BILLING_CURRENCY`.
+4. Add the webhook endpoint `https://api.ontrack.example/api/billing/webhook` and subscribe
+   to the events below. Stripe signs every request with the `stripe-signature` header; the
+   Worker verifies it before touching the database.
+   - `checkout.session.completed`
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.payment_failed`
+5. Local test loop:
+
+   ```bash
+   stripe listen --forward-to http://127.0.0.1:7891/api/billing/webhook
+   stripe trigger checkout.session.completed
+   ```
+
+6. Verify: checkout returns a Stripe URL, the webhook creates/updates `Subscription`,
+   `/api/agents/usage` shows the Pro limits, and the portal opens.
+7. If Stripe is unset, `/api/billing/plans` still renders but checkout is disabled.
+
+## 7.6 PWA
+
+`npm run build -w web` generates `manifest.webmanifest`, `sw.js`, and the Workbox
+precache. Serve the `dist` directory over HTTPS. The service worker caches the shell and
+static assets; it does **not** queue failed API writes. Test install and offline reload
+on one Android device and one iPhone before announcing mobile support.
+
 ## 8. Post-deploy verification
 
 - [ ] `/health` returns 200.

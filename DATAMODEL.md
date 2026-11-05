@@ -267,6 +267,27 @@ model EmailVerificationToken {
   createdAt DateTime @default(now())
 }
 
+model Subscription {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan               String   @default("free") // free | pro | teams | industry
+  status             String   @default("active")
+  provider           String?  // "stripe"
+  customerId         String?  @unique
+  subscriptionId     String?  @unique
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model BillingEvent {
+  id          String   @id // provider event id
+  type        String
+  processedAt DateTime @default(now())
+}
+
 model PasswordResetToken {
   id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -646,6 +667,20 @@ creation falls back to `['message']` rather than storing a set that discards eve
 | POST   | `/api/model-keys`   | `{ provider, label, apiKey, defaultModel, baseUrl? }` | `201 { data: ModelKey }` — **live-validated** against the provider before storing |
 | DELETE | `/api/model-keys/:id` | —                            | `204`; clears `Agent.modelKeyId` references    |
 
+### Billing (Stripe, optional)
+
+| Method | Path                    | Body / Query           | Returns |
+| ------ | ----------------------- | ---------------------- | ------- |
+| GET    | `/api/billing/plans`    | — (public)             | `{ data: Plan[] }` — free, pro, teams, industry; `checkoutAvailable` reflects env |
+| GET    | `/api/billing/status`   | — (auth)               | `{ data: { plan, status, currentPeriodEnd, cancelAtPeriodEnd, configured } }` |
+| POST   | `/api/billing/checkout` | `{ interval: "monthly"\|"yearly" }` (auth) | `{ data: { url } }` — Stripe Checkout |
+| POST   | `/api/billing/portal`   | — (auth)               | `{ data: { url } }` — Stripe customer portal |
+| POST   | `/api/billing/webhook`  | raw Stripe event       | `{ data: { received: true } }`; signature verified, events deduped by id |
+
+Plan limits live in `apps/backend/src/services/entitlements.service.ts`: free 50 runs/day +
+500k tokens/month; pro 200 + 2M; teams 500 + 5M; industry 1000 + 20M. A canceled/incomplete
+subscription falls back to free without deleting the row.
+
 ### Gmail OAuth (implemented, requires live credentials)
 
 | Method   | Path                            | Auth   | Flow |
@@ -705,7 +740,8 @@ with no mail in it.
   when needed. `20261105090000_saas_hardening_p0` is **additive only**: it adds
   `User.avatarUrl`, the `Agent(userId)` index, and `Appointment.createdAt/updatedAt`.
   `20261105100000_agent_run_lock` adds `AgentRun.lockKey` plus its unique index for the
-  cross-isolate run lock.
+  cross-isolate run lock. `20261105120000_stripe_billing` adds `Subscription` and
+  `BillingEvent` (additive).
 - Env bindings in `wrangler.jsonc`: `WEB_URL` (var), plus secrets in `.dev.vars`:
   `DATABASE_URL`, `JWT_SECRET`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`,
   `MODEL_KEY_ENCRYPTION_KEY`, `INTEGRATION_ENCRYPTION_KEY`, `GOOGLE_CLIENT_ID`,
