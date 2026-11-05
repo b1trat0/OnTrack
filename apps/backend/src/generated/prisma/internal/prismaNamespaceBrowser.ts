@@ -90,6 +90,7 @@ export const UserScalarFieldEnum = {
   name: 'name',
   passwordHash: 'passwordHash',
   emailVerified: 'emailVerified',
+  avatarUrl: 'avatarUrl',
   refreshTokenDigest: 'refreshTokenDigest',
   refreshTokenExpiresAt: 'refreshTokenExpiresAt',
   createdAt: 'createdAt',
@@ -146,7 +147,9 @@ export const AppointmentScalarFieldEnum = {
   startTime: 'startTime',
   endTime: 'endTime',
   color: 'color',
-  notes: 'notes'
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type AppointmentScalarFieldEnum = (typeof AppointmentScalarFieldEnum)[keyof typeof AppointmentScalarFieldEnum]
