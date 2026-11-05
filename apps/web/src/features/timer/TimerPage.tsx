@@ -36,7 +36,18 @@ export function TimerPage() {
   const [presetsOpen, setPresetsOpen] = useState(false)
   const [edits, setEdits] = useState<Record<string, string>>({})
   const [customInput, setCustomInput] = useState('')
+  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() =>
+    'Notification' in window ? Notification.permission : 'unsupported'
+  )
   const pushToast = useToastStore((state) => state.push)
+
+  useEffect(() => {
+    if (!('Notification' in window)) return
+    setPermission(Notification.permission)
+    if (timer.notificationsOn && Notification.permission !== 'granted') {
+      timer.setNotificationsOn(false)
+    }
+  }, [timer.notificationsOn, timer.setNotificationsOn])
 
   useEffect(() => {
     if (!presetsOpen) return
@@ -59,28 +70,27 @@ export function TimerPage() {
 
   const recentTimerId = useRef<number | null>(null)
   useEffect(() => {
-    if (timer.status === 'running') {
-      recentTimerId.current = window.setTimeout(() => {
-        playChime(1)
-      }, Math.max(0, timer.minutes * 60_000 - 5_000))
-      return () => {
-        if (recentTimerId.current) window.clearTimeout(recentTimerId.current)
-      }
+    if (timer.status !== 'running' || !timer.endAt) return
+    // Schedule from the live end time so pause/resume stays in sync.
+    const delay = Math.max(0, timer.endAt - Date.now() - 5_000)
+    recentTimerId.current = window.setTimeout(() => playChime(1), delay)
+    return () => {
+      if (recentTimerId.current) window.clearTimeout(recentTimerId.current)
     }
-  }, [timer.status, timer.minutes])
+  }, [timer.status, timer.endAt])
 
   useEffect(() => {
-    if (!timer.soundOn) return
+    // soundOn only controls audio; escalation itself must run even when muted.
     const checkInterval = window.setInterval(() => {
       const pending = timer.reminders
       for (const reminder of pending) {
         const age = Date.now() - reminder.lastEscalatedAt
         if (reminder.level === 1 && age > 30_000) {
           timer.escalateReminder(reminder.id)
-          playChime(2)
+          if (timer.soundOn) playChime(2)
         } else if (reminder.level === 2 && age > 60_000) {
           timer.escalateReminder(reminder.id)
-          playChime(3)
+          if (timer.soundOn) playChime(3)
           notifyBrowser('Still there?', 'Your focus session is waiting for you.')
         }
       }
@@ -238,18 +248,33 @@ export function TimerPage() {
               onClick={() => {
                 if (timer.notificationsOn) {
                   timer.setNotificationsOn(false)
-                } else if ('Notification' in window) {
-                  Notification.requestPermission().then((permission) => {
-                    timer.setNotificationsOn(permission === 'granted')
-                  })
-                } else {
-                  timer.setNotificationsOn(true)
+                  return
                 }
+                if (!('Notification' in window)) {
+                  pushToast({ title: 'Notifications are not supported here', level: 'warn' })
+                  return
+                }
+                if (Notification.permission === 'denied') {
+                  pushToast({
+                    title: 'Notifications are blocked',
+                    message: 'Allow them in your browser settings, then try again.',
+                    level: 'warn',
+                  })
+                  return
+                }
+                void Notification.requestPermission().then((result) => {
+                  setPermission(result)
+                  timer.setNotificationsOn(result === 'granted')
+                })
               }}
               className="flex items-center gap-1.5 transition hover:text-(--text)"
             >
               <Zap size={14} />
-              {timer.notificationsOn ? 'Alerts on' : 'Alerts off'}
+              {permission === 'denied'
+                ? 'Alerts blocked'
+                : timer.notificationsOn
+                  ? 'Alerts on'
+                  : 'Alerts off'}
             </button>
           </div>
         </div>
