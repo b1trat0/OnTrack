@@ -66,6 +66,7 @@ Front source: `apps/web/src/global/stores/useUserStore.ts` — `AppUser` (define
 | `email`          | string               | unique, normalized lowercase                    |
 | `name`           | string               |                                                |
 | `emailVerified`  | boolean              | must be `true` to sign in                       |
+| `avatarUrl`      | string \| null       | profile image URL; written by `PATCH /api/auth/me` |
 | `createdAt`      | datetime             | ISO on the wire                                |
 
 Server-side only (never returned): `passwordHash` (bcrypt, 12 rounds),
@@ -111,6 +112,8 @@ Front source: `apps/web/src/global/stores/useCalendarStore.ts` — `Appointment`
 | `endTime`   | `string \| null`            | `HH:mm` or `null`                               |
 | `color`     | string (hex)                | defaults `#8b5cf6`; calendar tasks use a fixed `#f59e0b` |
 | `notes`     | string                      | defaults `""`                                   |
+| `createdAt` | datetime                    | audit timestamp                                 |
+| `updatedAt` | datetime                    | audit timestamp                                 |
 
 **Entity separation (enforced 2026-09):** Notes tasks (`ontrack-notes` → `Task`) and Calendar
 entries (`ontrack-calendar` → `Appointment`) are **two distinct entities that never mix.** The
@@ -167,6 +170,14 @@ runs/day/user (429), in-flight concurrency lock per agent (409), per-run `maxTok
 LLM; output JSON is validated by Zod. `draftOnly=true` is the default on every agent. The runner
 composes the system prompt from the agent's Markdown `description` (the `prompt` column is no
 longer used).
+
+**Draft mode (enforced):** when `draftOnly=true`, the runner writes the run result to the
+**inbox only**. A configured `notes` or `calendar` destination becomes a proposal in
+`pendingActions` instead of a write; nothing touches the Notes board, Calendar, or Diary until
+the user approves it. When `draftOnly=false`, configured destinations are written directly and
+the approval dialog only carries machine-line items the destination did not already materialise.
+Tool permissions are persisted through the agent create/update payload (`tools: string[]`) and
+validated against the 14-name registry; the editor no longer sends a list the API silently drops.
 
 **Default agents (v2.1):** 3 pre-built agents are seeded per user — adherent **Email Summarizer**
 (`email_read`/`classify`/`calendar_write`/`note_write`/`task_move`), **Job Finder**
@@ -528,13 +539,13 @@ Validation: `date` `YYYY-MM-DD`, `month` `YYYY-MM`, `mood` ∈ `great|good|okay|
 | Method | Path                    | Body / Query                 | Returns                                   |
 | ------ | ----------------------- | ---------------------------- | ----------------------------------------- |
 | GET    | `/api/agents`           | —                            | `{ data: Agent[] }` (tools included)      |
-| POST   | `/api/agents`           | `{ name, role, icon, color, description, preferences?, templateId?, prompt?, sources?, output?, draftOnly?, modelKeyId?, maxTokens? }` | `201 { data: Agent }` (template defaults + `AgentTool` rows applied when `templateId` set; `output` is a non-empty `OutputType[]`, defaulting to `['message']`) |
+| POST   | `/api/agents`           | `{ name, role, icon, color, description, preferences?, templateId?, prompt?, sources?, output?, draftOnly?, modelKeyId?, maxTokens?, tools? }` | `201 { data: Agent }` (template defaults + `AgentTool` rows applied when `templateId` set; `tools` is the enabled registry-name set and wins over template defaults) |
 | GET    | `/api/agents/:id`       | —                            | `{ data: Agent }`                         |
 | PATCH  | `/api/agents/:id`       | any subset of the above      | `{ data: Agent }` (at least one field)    |
 | DELETE | `/api/agents/:id`       | —                            | `204` (cascades runs/messages/tools)      |
 | POST   | `/api/agents/:id/run`   | —                            | `{ data: RunResult }`; `404`, `409 CONFLICT` (in-flight), `429 RATE_LIMIT` |
 | GET    | `/api/agents/:id/runs`  | `?limit&offset`              | `{ data: { runs: RunListItem[], hasMore } }` |
-| POST   | `/api/agents/actions`   | `{ items: ActionItem[] }`    | `{ data: { created: { kind, id }[] } }` — creates `Appointment` (`task` → `kind:'task'`, `event` → `kind:'appointment'`) and `DiaryEntry` (`note`, tagged `agent-output`); triggered only after the user approves proposed items in the UI |
+| POST   | `/api/agents/actions`   | `{ items: ActionItem[] }`    | `{ data: { created: { kind, id }[] } }` — creates a `Task` on the Notes board (`task`), an `Appointment` (`event` → `kind:'appointment'`), and a `DiaryEntry` (`note`, tagged `agent-output`); triggered only after the user approves proposed items in the UI |
 
 ```ts
 type ActionItem = {
@@ -681,7 +692,8 @@ with no mail in it.
   `wrangler dev` `.dev.vars` secret (and a Worker secret at deploy).
 - Migrations: applied via `prisma migrate deploy` (local Docker Postgres `ontrack-pg`).
   `prisma migrate dev` is non-interactive-unfriendly; hand-written migrations + `migrate deploy`
-  when needed.
+  when needed. `20261105090000_saas_hardening_p0` is **additive only**: it adds
+  `User.avatarUrl`, the `Agent(userId)` index, and `Appointment.createdAt/updatedAt`.
 - Env bindings in `wrangler.jsonc`: `WEB_URL` (var), plus secrets in `.dev.vars`:
   `DATABASE_URL`, `JWT_SECRET`, `RESEND_API_KEY`, `OPENROUTER_API_KEY`,
   `MODEL_KEY_ENCRYPTION_KEY`, `INTEGRATION_ENCRYPTION_KEY`, `GOOGLE_CLIENT_ID`,
