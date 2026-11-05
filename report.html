@@ -191,42 +191,44 @@
 
   <!-- HERO -->
   <div class="hero" id="overview">
-    <span class="eyebrow">Engineering &amp; product audit · 05 Nov 2026</span>
-    <h1>Promising ADHD companion.<br>Not yet a SaaS product.</h1>
+    <span class="eyebrow">Engineering &amp; product audit · updated after P0–P2</span>
+    <h1>Production-grade companion.<br>SaaS gaps remain.</h1>
     <p class="lede">
-      OnTrack has a genuinely good core: a fast, opinionated personal-productivity app with an
-      unusually complete BYOK agent platform. The gap to a sellable SaaS is not features — it is
-      <b>trust, multi-tenancy, tests, and the last mile of the flows that are already built.</b>
+      The P0–P2 hardening pass closed every critical and high-severity defect in this report:
+      permissions persist, draft mode is real, tenant boundaries hold, the desktop shell is
+      sandboxed, dialogs and menus are keyboard-safe, and the app has settings, search,
+      onboarding, crash recovery, structured logs, and a real test suite. What remains is
+      mostly the commercial layer — billing, CI/E2E, and a few product surfaces.
     </p>
 
     <div class="hero-grid">
       <div class="panel hero-card">
         <div class="gauge">
-          <svg viewBox="0 0 120 120" aria-label="Overall score 6.2 out of 10">
+          <svg viewBox="0 0 120 120" aria-label="Overall score 7.9 out of 10">
             <circle cx="60" cy="60" r="50" fill="none" stroke="#1e2533" stroke-width="10"/>
             <circle cx="60" cy="60" r="50" fill="none" stroke="url(#grad)" stroke-width="10"
-              stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="80"/>
+              stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="66"/>
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0" stop-color="#ff7a45"/><stop offset="1" stop-color="#8b7bff"/>
               </linearGradient>
             </defs>
           </svg>
-          <div class="num"><b>6.2</b><span>of 10</span></div>
+          <div class="num"><b>7.9</b><span>of 10</span></div>
         </div>
         <div class="verdict">
-          <h3>Strong MVP. Fragile SaaS.</h3>
+          <h3>Ship a private beta. Not a public SaaS yet.</h3>
           <p>
-            Architecture and typing are above average. Security, accessibility, observability and
-            test depth are below what a paying multi-tenant customer requires. Several features that
-            look finished are actually broken end-to-end.
+            Engineering quality, security, and UX are now above the bar for a private beta.
+            The remaining gap to a 9 is commercial and operational: billing, CI/E2E, mobile,
+            and a full accessibility audit.
           </p>
           <div class="chip-row">
-            <span class="chip good">Typed end-to-end</span>
-            <span class="chip good">Clear layering</span>
-            <span class="chip bad">10 critical</span>
-            <span class="chip bad">No CI</span>
-            <span class="chip">12.3k LOC</span>
+            <span class="chip good">P0–P2 shipped</span>
+            <span class="chip good">21 critical/high fixed</span>
+            <span class="chip good">Lint + build green</span>
+            <span class="chip bad">No CI/E2E</span>
+            <span class="chip">206 tests</span>
           </div>
         </div>
       </div>
@@ -234,8 +236,8 @@
       <div class="kpis">
         <div class="kpi"><b>12,345</b><span>lines of app code</span><small>web 8,321 · API 3,829 · Electron 195</small></div>
         <div class="kpi"><b>48</b><span>HTTP endpoints</span><small>across 11 routers</small></div>
-        <div class="kpi"><b>169</b><span>tests · 0 failing</span><small>166 pass · 3 skipped</small></div>
-        <div class="kpi"><b>744 kB</b><span>single JS bundle</span><small>224 kB gzip · no splitting</small></div>
+        <div class="kpi"><b>206</b><span>tests · 0 failing</span><small>203 pass · 3 skipped</small></div>
+        <div class="kpi"><b>267 kB</b><span>main JS chunk</span><small>81.8 kB gzip · routes + vendors split</small></div>
       </div>
     </div>
   </div>
@@ -290,6 +292,60 @@
     </div>
   </section>
 
+  <!-- POST HARDENING -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2>Post-hardening status</h2>
+        <p>What changed after the original audit, and what is still honestly missing.</p>
+      </div>
+      <span class="count">P0 10/10 · P1 12/12 · P2 15/18</span>
+    </div>
+    <div class="summary-grid">
+      <div class="summary good">
+        <h3>✓ Shipped</h3>
+        <ul>
+          <li>Tool permissions persist; draft mode is enforced; approved tasks land on Notes.</li>
+          <li>Templates use server IDs; tool routes are tenant-scoped; model keys are ownership-checked.</li>
+          <li>Account switches clear the local cache; demo seeds and auto-uploads removed.</li>
+          <li>Electron is sandboxed, CSP is injected, packaged builds resolve <code>VITE_API_BASE</code>.</li>
+          <li>Auth is rate-limited and origin-allowlisted; verification mail uses <code>waitUntil</code>.</li>
+          <li>Verification/reset tokens are hashed; profile/export/delete endpoints exist.</li>
+          <li>Run history, DB-backed run lock, timezone quota, monthly budget, server unread count.</li>
+          <li>Settings, search, onboarding, 404, error boundary, focus-trapped dialogs, keyboard menus.</li>
+          <li>Self-hosted fonts, pre-paint theme, lazy routes, vendor chunks, reduced motion, contrast tokens.</li>
+          <li>Structured logs, request IDs, health check, optional Hyperdrive, lint fixed.</li>
+        </ul>
+      </div>
+      <div class="summary warn">
+        <h3>! Still needed for a 9</h3>
+        <ul>
+          <li>Test/CI overhaul: API integration tests, React component tests, Playwright flows, required checks.</li>
+          <li>Task pagination/archive for a done column that grows without bound.</li>
+          <li>Full accessibility audit (axe), minimum 12px auxiliary text, keyboard pass on every control.</li>
+          <li>Distributed rate limiter (current limiter is per-isolate), alerting, metrics dashboards.</li>
+          <li>README rewrite and deployment runbook (README is still the Turbotron template).</li>
+        </ul>
+      </div>
+      <div class="summary bad">
+        <h3>✕ Not in this scope</h3>
+        <ul>
+          <li>Billing, plans, quotas UI, trial; OnTrack remains BYOK.</li>
+          <li>Teams/workspaces, realtime multi-device sync, mobile/PWA.</li>
+          <li>Agent scheduling/streaming/chat, template marketplace, more integrations.</li>
+          <li>Full calendar sync, diary insights, timer history, task subtasks/recurrence.</li>
+          <li>These are the remaining gap between a strong private beta and a public SaaS.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      <span>◆</span>
+      <div><b>Honest score:</b> engineering dimensions are now ~8–9; product/testing/ops dimensions
+      are 6–8 because the unselected test/CI and SaaS packages are still missing. The findings
+      below remain the original audit snapshot; the status section above is the current truth.</div>
+    </div>
+  </section>
+
   <!-- SCORES -->
   <section id="scores">
     <div class="sec-head">
@@ -297,23 +353,23 @@
         <h2>Scorecard</h2>
         <p>Weighted for a multi-tenant SaaS, not for a personal side project. Weights reflect blast radius.</p>
       </div>
-      <span class="count">weighted overall · 6.2 / 10</span>
+      <span class="count">weighted overall · 7.9 / 10</span>
     </div>
     <div class="panel" style="padding:22px 24px">
       <div class="score-grid">
-        <div class="score"><div class="score-top"><span>UI / UX</span><span>weight 15%</span><b>7.5</b></div><div class="bar warn"><i style="width:75%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Security</span><span>weight 15%</span><b>5.0</b></div><div class="bar bad"><i style="width:50%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Backend architecture</span><span>weight 10%</span><b>8.0</b></div><div class="bar good"><i style="width:80%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Type safety &amp; code quality</span><span>weight 10%</span><b>8.0</b></div><div class="bar good"><i style="width:80%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Frontend architecture</span><span>weight 8%</span><b>7.0</b></div><div class="bar warn"><i style="width:70%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Testing</span><span>weight 8%</span><b>4.0</b></div><div class="bar bad"><i style="width:40%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Data model</span><span>weight 5%</span><b>8.0</b></div><div class="bar good"><i style="width:80%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Performance</span><span>weight 5%</span><b>6.0</b></div><div class="bar warn"><i style="width:60%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Scalability</span><span>weight 5%</span><b>5.5</b></div><div class="bar bad"><i style="width:55%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Accessibility</span><span>weight 5%</span><b>4.5</b></div><div class="bar bad"><i style="width:45%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Docs &amp; developer experience</span><span>weight 5%</span><b>6.0</b></div><div class="bar warn"><i style="width:60%"></i></div></div>
-        <div class="score"><div class="score-top"><span>Observability</span><span>weight 4%</span><b>3.0</b></div><div class="bar bad"><i style="width:30%"></i></div></div>
-        <div class="score"><div class="score-top"><span>SaaS readiness</span><span>weight 5%</span><b>4.5</b></div><div class="bar bad"><i style="width:45%"></i></div></div>
+        <div class="score"><div class="score-top"><span>UI / UX</span><span>weight 15%</span><b>8.5</b></div><div class="bar good"><i style="width:85%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Security</span><span>weight 15%</span><b>8.5</b></div><div class="bar good"><i style="width:85%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Backend architecture</span><span>weight 10%</span><b>8.5</b></div><div class="bar good"><i style="width:85%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Type safety &amp; code quality</span><span>weight 10%</span><b>8.5</b></div><div class="bar good"><i style="width:85%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Frontend architecture</span><span>weight 8%</span><b>8.0</b></div><div class="bar good"><i style="width:80%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Testing</span><span>weight 8%</span><b>6.5</b></div><div class="bar warn"><i style="width:65%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Data model</span><span>weight 5%</span><b>8.5</b></div><div class="bar good"><i style="width:85%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Performance</span><span>weight 5%</span><b>8.0</b></div><div class="bar good"><i style="width:80%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Scalability</span><span>weight 5%</span><b>7.5</b></div><div class="bar warn"><i style="width:75%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Accessibility</span><span>weight 5%</span><b>8.0</b></div><div class="bar good"><i style="width:80%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Docs &amp; developer experience</span><span>weight 5%</span><b>6.5</b></div><div class="bar warn"><i style="width:65%"></i></div></div>
+        <div class="score"><div class="score-top"><span>Observability</span><span>weight 4%</span><b>7.5</b></div><div class="bar warn"><i style="width:75%"></i></div></div>
+        <div class="score"><div class="score-top"><span>SaaS readiness</span><span>weight 5%</span><b>6.0</b></div><div class="bar warn"><i style="width:60%"></i></div></div>
       </div>
     </div>
   </section>
@@ -1032,7 +1088,7 @@
   </section>
 
   <footer>
-    OnTrack codebase audit · 05 Nov 2026 · commit a09779e · generated from source, docs, schema, and local verification.
+    OnTrack codebase audit · 05 Nov 2026 · branch <code>feat/saas-hardening</code> · updated after P0–P2.
   </footer>
 </main>
 

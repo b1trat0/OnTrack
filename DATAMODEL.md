@@ -222,8 +222,9 @@ and deletes the row (`DELETE /api/auth/gmail/disconnect`).
 die between workerd isolate activations and the pool doesn't notice (the next query hangs with
 "The Workers runtime canceled this request because ... hung"). Parameters: `max: 1`,
 `connectionTimeoutMillis: 3000`, `idleTimeoutMillis: 500` (idle sockets self-close, so nothing
-leaks). Cost is one TCP+handshake per request (~10-30 ms local); revisit with Hyperdrive for
-production.
+leaks). Cost is one TCP+handshake per request (~10-30 ms local). `databaseUrl(env)` prefers a
+bound `HYPERDRIVE.connectionString` when present, so production can move to Hyperdrive without
+changing controllers; local dev and tests keep using `DATABASE_URL`.
 
 ```prisma
 generator client {
@@ -465,6 +466,8 @@ verification or reset link.
 ## 4. REST API contract (Hono)
 
 - Base path prefix: `/api`. Auth routes under `/api/auth`, tasks under `/api/tasks`.
+- **Health:** `GET /health` returns `{ status: "ok", service, time }` without auth.
+- **Request IDs:** every `/api/*` response carries `X-Request-Id`; errors are logged as one-line JSON.
 - **Auth:** JWT `Authorization: Bearer <accessToken>` for `/api/tasks`. CORS is open (desktop app).
 - **Envelope:** success → `{ "data": T }` (mutations return the entity; deletes/void → `204`).
   Errors → `{ "error": { "code", "message" } }` with 4xx/5xx status.
@@ -482,7 +485,9 @@ verification or reset link.
 | POST   | `/api/auth/refresh`            | `{ refreshToken }`                 | same shape; new refresh token; invalidates old |
 | POST   | `/api/auth/signout`            | — (auth)                           | `204`; revokes refresh token |
 | GET    | `/api/auth/me`                 | — (auth)                           | `{ data: user }`             |
-| PATCH  | `/api/auth/me`                 | `{ name?, avatarUrl? }` (auth)     | `{ data: user }` (avatar not in UI yet) |
+| PATCH  | `/api/auth/me`                 | `{ name?, avatarUrl? }` (auth)     | `{ data: user }`             |
+| DELETE | `/api/auth/me`                 | `{ password }` (auth)              | `204`; deletes the account and all related rows |
+| GET    | `/api/auth/export`             | — (auth)                           | `{ data: { exportedAt, user, tasks, appointments, diaryEntries, agents, agentMessages, modelKeys } }` |
 | PATCH  | `/api/auth/password`           | `{ currentPassword, newPassword }`(auth) | `204`; revokes session |
 | POST   | `/api/auth/forgot-password`    | `{ email }`                        | `{ data: { message } }` (always benign) |
 | POST   | `/api/auth/reset-password`     | `{ token, newPassword }`           | `204`                        |
