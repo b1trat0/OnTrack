@@ -4,6 +4,7 @@ import { HelpCircle, LogOut, Menu, Search, Settings, Sparkles } from 'lucide-rea
 import { ThemeSwitcher } from '../ui/ThemeSwitcher'
 import { useUserStore } from '../stores/useUserStore'
 import { menuKeyDown, useEscape } from '../lib/menu'
+import { NotificationCentre } from '../../features/notifications/NotificationCentre'
 
 function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -66,6 +67,8 @@ export function Navbar({
       </NavLink>
 
       <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <NotificationCentre />
+
         <button
           onClick={onOpenSearch}
           aria-label="Search OnTrack (Ctrl+K)"

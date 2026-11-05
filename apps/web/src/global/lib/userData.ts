@@ -19,6 +19,7 @@ export const USER_SCOPED_KEYS = [
   'ontrack-model-keys',
   'ontrack-agent-messages',
   'ontrack-timer',
+  'ontrack-notifications',
 ] as const
 
 export function getActiveUserId(): string | null {

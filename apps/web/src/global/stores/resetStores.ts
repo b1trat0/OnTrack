@@ -7,6 +7,7 @@ import { useAgentMessagesStore } from './useAgentMessagesStore'
 import { useIntegrationsStore } from './useIntegrationsStore'
 import { DEFAULT_PRESETS, useTimerStore } from './useTimerStore'
 import { useToastStore } from './useToastStore'
+import { useNotificationsStore } from './useNotificationsStore'
 
 /**
  * Drops every user-owned slice from memory.
@@ -76,4 +77,5 @@ export function resetUserStores(): void {
   })
 
   useToastStore.setState({ toasts: [] })
+  useNotificationsStore.setState({ seenIds: [] })
 }
