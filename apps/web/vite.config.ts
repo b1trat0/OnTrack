@@ -8,8 +8,8 @@ import tailwindcss from '@tailwindcss/vite'
 const CSP_DEV = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "img-src 'self' data:",
   "connect-src 'self' ws://localhost:3456 ws://127.0.0.1:3456 http://localhost:3456 http://127.0.0.1:7891 https:",
 ].join('; ')
@@ -17,8 +17,8 @@ const CSP_DEV = [
 const CSP_PROD = [
   "default-src 'self'",
   "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "img-src 'self' data:",
   "connect-src 'self' http://127.0.0.1:7891 https:",
 ].join('; ')
@@ -44,6 +44,18 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     proxy: {
       '/api': 'http://127.0.0.1:7891',
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          markdown: ['react-markdown'],
+          dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          motion: ['motion'],
+        },
+      },
     },
   },
 }))
