@@ -39,6 +39,7 @@ export type AgentRunMinAggregateOutputType = {
   userId: string | null
   agentId: string | null
   status: string | null
+  lockKey: string | null
   inputSnap: string | null
   outputSnap: string | null
   toolCalls: string | null
@@ -53,6 +54,7 @@ export type AgentRunMaxAggregateOutputType = {
   userId: string | null
   agentId: string | null
   status: string | null
+  lockKey: string | null
   inputSnap: string | null
   outputSnap: string | null
   toolCalls: string | null
@@ -67,6 +69,7 @@ export type AgentRunCountAggregateOutputType = {
   userId: number
   agentId: number
   status: number
+  lockKey: number
   inputSnap: number
   outputSnap: number
   toolCalls: number
@@ -91,6 +94,7 @@ export type AgentRunMinAggregateInputType = {
   userId?: true
   agentId?: true
   status?: true
+  lockKey?: true
   inputSnap?: true
   outputSnap?: true
   toolCalls?: true
@@ -105,6 +109,7 @@ export type AgentRunMaxAggregateInputType = {
   userId?: true
   agentId?: true
   status?: true
+  lockKey?: true
   inputSnap?: true
   outputSnap?: true
   toolCalls?: true
@@ -119,6 +124,7 @@ export type AgentRunCountAggregateInputType = {
   userId?: true
   agentId?: true
   status?: true
+  lockKey?: true
   inputSnap?: true
   outputSnap?: true
   toolCalls?: true
@@ -220,6 +226,7 @@ export type AgentRunGroupByOutputType = {
   userId: string
   agentId: string
   status: string
+  lockKey: string | null
   inputSnap: string | null
   outputSnap: string | null
   toolCalls: string | null
@@ -257,6 +264,7 @@ export type AgentRunWhereInput = {
   userId?: Prisma.StringFilter<"AgentRun"> | string
   agentId?: Prisma.StringFilter<"AgentRun"> | string
   status?: Prisma.StringFilter<"AgentRun"> | string
+  lockKey?: Prisma.StringNullableFilter<"AgentRun"> | string | null
   inputSnap?: Prisma.StringNullableFilter<"AgentRun"> | string | null
   outputSnap?: Prisma.StringNullableFilter<"AgentRun"> | string | null
   toolCalls?: Prisma.StringNullableFilter<"AgentRun"> | string | null
@@ -273,6 +281,7 @@ export type AgentRunOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  lockKey?: Prisma.SortOrderInput | Prisma.SortOrder
   inputSnap?: Prisma.SortOrderInput | Prisma.SortOrder
   outputSnap?: Prisma.SortOrderInput | Prisma.SortOrder
   toolCalls?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -286,6 +295,7 @@ export type AgentRunOrderByWithRelationInput = {
 
 export type AgentRunWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  lockKey?: string
   AND?: Prisma.AgentRunWhereInput | Prisma.AgentRunWhereInput[]
   OR?: Prisma.AgentRunWhereInput[]
   NOT?: Prisma.AgentRunWhereInput | Prisma.AgentRunWhereInput[]
@@ -301,13 +311,14 @@ export type AgentRunWhereUniqueInput = Prisma.AtLeast<{
   finishedAt?: Prisma.DateTimeNullableFilter<"AgentRun"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   agent?: Prisma.XOR<Prisma.AgentScalarRelationFilter, Prisma.AgentWhereInput>
-}, "id">
+}, "id" | "lockKey">
 
 export type AgentRunOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  lockKey?: Prisma.SortOrderInput | Prisma.SortOrder
   inputSnap?: Prisma.SortOrderInput | Prisma.SortOrder
   outputSnap?: Prisma.SortOrderInput | Prisma.SortOrder
   toolCalls?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -330,6 +341,7 @@ export type AgentRunScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"AgentRun"> | string
   agentId?: Prisma.StringWithAggregatesFilter<"AgentRun"> | string
   status?: Prisma.StringWithAggregatesFilter<"AgentRun"> | string
+  lockKey?: Prisma.StringNullableWithAggregatesFilter<"AgentRun"> | string | null
   inputSnap?: Prisma.StringNullableWithAggregatesFilter<"AgentRun"> | string | null
   outputSnap?: Prisma.StringNullableWithAggregatesFilter<"AgentRun"> | string | null
   toolCalls?: Prisma.StringNullableWithAggregatesFilter<"AgentRun"> | string | null
@@ -342,6 +354,7 @@ export type AgentRunScalarWhereWithAggregatesInput = {
 export type AgentRunCreateInput = {
   id?: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -358,6 +371,7 @@ export type AgentRunUncheckedCreateInput = {
   userId: string
   agentId: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -370,6 +384,7 @@ export type AgentRunUncheckedCreateInput = {
 export type AgentRunUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -386,6 +401,7 @@ export type AgentRunUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -400,6 +416,7 @@ export type AgentRunCreateManyInput = {
   userId: string
   agentId: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -412,6 +429,7 @@ export type AgentRunCreateManyInput = {
 export type AgentRunUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -426,6 +444,7 @@ export type AgentRunUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -450,6 +469,7 @@ export type AgentRunCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  lockKey?: Prisma.SortOrder
   inputSnap?: Prisma.SortOrder
   outputSnap?: Prisma.SortOrder
   toolCalls?: Prisma.SortOrder
@@ -468,6 +488,7 @@ export type AgentRunMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  lockKey?: Prisma.SortOrder
   inputSnap?: Prisma.SortOrder
   outputSnap?: Prisma.SortOrder
   toolCalls?: Prisma.SortOrder
@@ -482,6 +503,7 @@ export type AgentRunMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   agentId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  lockKey?: Prisma.SortOrder
   inputSnap?: Prisma.SortOrder
   outputSnap?: Prisma.SortOrder
   toolCalls?: Prisma.SortOrder
@@ -582,6 +604,7 @@ export type AgentRunUncheckedUpdateManyWithoutAgentNestedInput = {
 export type AgentRunCreateWithoutUserInput = {
   id?: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -596,6 +619,7 @@ export type AgentRunUncheckedCreateWithoutUserInput = {
   id?: string
   agentId: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -639,6 +663,7 @@ export type AgentRunScalarWhereInput = {
   userId?: Prisma.StringFilter<"AgentRun"> | string
   agentId?: Prisma.StringFilter<"AgentRun"> | string
   status?: Prisma.StringFilter<"AgentRun"> | string
+  lockKey?: Prisma.StringNullableFilter<"AgentRun"> | string | null
   inputSnap?: Prisma.StringNullableFilter<"AgentRun"> | string | null
   outputSnap?: Prisma.StringNullableFilter<"AgentRun"> | string | null
   toolCalls?: Prisma.StringNullableFilter<"AgentRun"> | string | null
@@ -651,6 +676,7 @@ export type AgentRunScalarWhereInput = {
 export type AgentRunCreateWithoutAgentInput = {
   id?: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -665,6 +691,7 @@ export type AgentRunUncheckedCreateWithoutAgentInput = {
   id?: string
   userId: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -704,6 +731,7 @@ export type AgentRunCreateManyUserInput = {
   id?: string
   agentId: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -716,6 +744,7 @@ export type AgentRunCreateManyUserInput = {
 export type AgentRunUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -730,6 +759,7 @@ export type AgentRunUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -743,6 +773,7 @@ export type AgentRunUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   agentId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -756,6 +787,7 @@ export type AgentRunCreateManyAgentInput = {
   id?: string
   userId: string
   status?: string
+  lockKey?: string | null
   inputSnap?: string | null
   outputSnap?: string | null
   toolCalls?: string | null
@@ -768,6 +800,7 @@ export type AgentRunCreateManyAgentInput = {
 export type AgentRunUpdateWithoutAgentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -782,6 +815,7 @@ export type AgentRunUncheckedUpdateWithoutAgentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -795,6 +829,7 @@ export type AgentRunUncheckedUpdateManyWithoutAgentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  lockKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   inputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   outputSnap?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   toolCalls?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -811,6 +846,7 @@ export type AgentRunSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   userId?: boolean
   agentId?: boolean
   status?: boolean
+  lockKey?: boolean
   inputSnap?: boolean
   outputSnap?: boolean
   toolCalls?: boolean
@@ -827,6 +863,7 @@ export type AgentRunSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   userId?: boolean
   agentId?: boolean
   status?: boolean
+  lockKey?: boolean
   inputSnap?: boolean
   outputSnap?: boolean
   toolCalls?: boolean
@@ -843,6 +880,7 @@ export type AgentRunSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   userId?: boolean
   agentId?: boolean
   status?: boolean
+  lockKey?: boolean
   inputSnap?: boolean
   outputSnap?: boolean
   toolCalls?: boolean
@@ -859,6 +897,7 @@ export type AgentRunSelectScalar = {
   userId?: boolean
   agentId?: boolean
   status?: boolean
+  lockKey?: boolean
   inputSnap?: boolean
   outputSnap?: boolean
   toolCalls?: boolean
@@ -868,7 +907,7 @@ export type AgentRunSelectScalar = {
   finishedAt?: boolean
 }
 
-export type AgentRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "agentId" | "status" | "inputSnap" | "outputSnap" | "toolCalls" | "tokensUsed" | "error" | "startedAt" | "finishedAt", ExtArgs["result"]["agentRun"]>
+export type AgentRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "agentId" | "status" | "lockKey" | "inputSnap" | "outputSnap" | "toolCalls" | "tokensUsed" | "error" | "startedAt" | "finishedAt", ExtArgs["result"]["agentRun"]>
 export type AgentRunInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   agent?: boolean | Prisma.AgentDefaultArgs<ExtArgs>
@@ -893,6 +932,11 @@ export type $AgentRunPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     userId: string
     agentId: string
     status: string
+    /**
+     * Set to the agent id while a run is in flight; null once finished. Unique,
+     * so two Workers cannot run the same agent at the same time.
+     */
+    lockKey: string | null
     inputSnap: string | null
     outputSnap: string | null
     toolCalls: string | null
@@ -1329,6 +1373,7 @@ export interface AgentRunFieldRefs {
   readonly userId: Prisma.FieldRef<"AgentRun", 'String'>
   readonly agentId: Prisma.FieldRef<"AgentRun", 'String'>
   readonly status: Prisma.FieldRef<"AgentRun", 'String'>
+  readonly lockKey: Prisma.FieldRef<"AgentRun", 'String'>
   readonly inputSnap: Prisma.FieldRef<"AgentRun", 'String'>
   readonly outputSnap: Prisma.FieldRef<"AgentRun", 'String'>
   readonly toolCalls: Prisma.FieldRef<"AgentRun", 'String'>

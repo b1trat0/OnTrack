@@ -226,6 +226,9 @@ model AgentRun {
   agentId    String
   agent      Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
   status     String    @default("running")
+  /// Set to the agent id while a run is in flight; null once finished. Unique,
+  /// so two Workers cannot run the same agent at the same time.
+  lockKey    String?   @unique
   inputSnap  String?
   outputSnap String?
   toolCalls  String?

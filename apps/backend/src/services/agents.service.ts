@@ -21,6 +21,15 @@ async function findOwnedAgent(db: Db, userId: string, agentId: string) {
   return agent
 }
 
+/** A model key is tenant data. An agent may only reference its owner's key. */
+async function assertOwnedModelKey(db: Db, userId: string, keyId: string): Promise<void> {
+  const key = await db.modelKey.findFirst({
+    where: { id: keyId, userId },
+    select: { id: true },
+  })
+  if (!key) throw new AppError('NOT_FOUND', 'Model key not found.', 404)
+}
+
 export async function listAgents(db: Db, userId: string) {
   const count = await db.agent.count({ where: { userId } })
   if (count === 0) await seedDefaultAgents(db, userId)
@@ -85,6 +94,7 @@ export async function createAgent(
   // "no tools", which is a valid choice.
   const tools = input.tools ?? defaultTools
   assertValidTools(tools)
+  if (input.modelKeyId) await assertOwnedModelKey(db, userId, input.modelKeyId)
 
   return db.$transaction(async (tx) => {
     const agent = await tx.agent.create({
@@ -147,6 +157,7 @@ export async function updateAgent(
     throw new AppError('VALIDATION', 'Pick at least one place to deliver output.', 400)
   }
   if (patch.tools !== undefined) assertValidTools(patch.tools)
+  if (patch.modelKeyId) await assertOwnedModelKey(db, userId, patch.modelKeyId)
 
   const { tools, ...agentPatch } = patch
 

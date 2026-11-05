@@ -103,7 +103,14 @@ export const handleRunAgent = (c: Context) =>
     const agentId = idGuard(c.req.param('id'))
     if (!agentId) return badParam(c)
     const db = prismaClient(c.env.DATABASE_URL)
-    const result = await agentRunner.runAgent(db, c.get('userId'), agentId, c.env)
+    const cf = (c.req.raw as Request & { cf?: { timezone?: string } }).cf
+    const result = await agentRunner.runAgent(
+      db,
+      c.get('userId'),
+      agentId,
+      c.env,
+      cf?.timezone ?? 'UTC'
+    )
     return ok(c, result)
   })
 

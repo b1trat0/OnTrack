@@ -20,6 +20,46 @@ import { createTask } from './task.service'
 import { resolveOutputDestinations, type OutputDestination } from '../lib/output-destination'
 
 const DAILY_RUN_LIMIT = 50
+const MONTHLY_TOKEN_BUDGET = 500_000
+const STALE_RUN_MS = 15 * 60 * 1000
+
+/**
+ * Start of the user's local day, expressed as a UTC instant.
+ *
+ * Workers run in UTC, so a raw `setHours(0,0,0,0)` reset the daily cap at UTC
+ * midnight for everyone. Cloudflare supplies `cf-timezone`; the controller
+ * passes it here.
+ */
+function startOfDayInTimeZone(timeZone: string): Date {
+  const now = new Date()
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(now)
+    const get = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0)
+    const asUtc = Date.UTC(
+      get('year'),
+      get('month') - 1,
+      get('day'),
+      get('hour'),
+      get('minute'),
+      get('second')
+    )
+    const offsetMs = asUtc - now.getTime()
+    return new Date(Date.UTC(get('year'), get('month') - 1, get('day')) - offsetMs)
+  } catch {
+    const fallback = new Date(now)
+    fallback.setUTCHours(0, 0, 0, 0)
+    return fallback
+  }
+}
 
 const runningAgents = new Set<string>()
 
@@ -292,23 +332,37 @@ export async function runAgent(
   db: PrismaClient,
   userId: string,
   agentId: string,
-  env: Env
+  env: Env,
+  timeZone = 'UTC'
 ): Promise<RunResult> {
   const started = Date.now()
   if (runningAgents.has(agentId)) {
     throw new AppError('CONFLICT', 'This agent is already running.', 409)
   }
 
-  const todayCount = await db.agentRun.count({
-    where: {
-      userId,
-      startedAt: {
-        gte: new Date(new Date().setHours(0, 0, 0, 0)),
-      },
-    },
-  })
+  const dayStart = startOfDayInTimeZone(timeZone)
+  const monthStart = new Date()
+  monthStart.setUTCDate(1)
+  monthStart.setUTCHours(0, 0, 0, 0)
+
+  const [todayCount, monthlyUsage] = await Promise.all([
+    db.agentRun.count({
+      where: { userId, startedAt: { gte: dayStart } },
+    }),
+    db.agentRun.aggregate({
+      where: { userId, startedAt: { gte: monthStart } },
+      _sum: { tokensUsed: true },
+    }),
+  ])
   if (todayCount >= DAILY_RUN_LIMIT) {
     throw new AppError('RATE_LIMIT', 'Daily run limit reached (50).', 429)
+  }
+  if ((monthlyUsage._sum.tokensUsed ?? 0) >= MONTHLY_TOKEN_BUDGET) {
+    throw new AppError(
+      'BUDGET_EXCEEDED',
+      `Monthly token budget reached (${MONTHLY_TOKEN_BUDGET.toLocaleString()} tokens).`,
+      429
+    )
   }
 
   const agent = await db.agent.findFirst({
@@ -316,6 +370,12 @@ export async function runAgent(
     include: { modelKey: true, tools: true },
   })
   if (!agent) throw new AppError('NOT_FOUND', 'Agent not found.', 404)
+
+  // A legacy or tampered row could point at another tenant's key. Never spend
+  // someone else's provider credits.
+  if (agent.modelKey && agent.modelKey.userId !== userId) {
+    throw new AppError('NOT_FOUND', 'Model key not found.', 404)
+  }
 
   let apiKey = env.OPENROUTER_API_KEY
   let baseUrl = DEFAULT_BASE_URL
@@ -340,17 +400,41 @@ export async function runAgent(
     )
   }
 
-  runningAgents.add(agentId)
-
-  const run = await db.agentRun.create({
-    data: {
-      userId,
+  // Reclaim a lock left behind by a crashed isolate before competing for a new one.
+  await db.agentRun.updateMany({
+    where: {
       agentId,
       status: 'running',
-      startedAt: new Date(),
-      inputSnap: JSON.stringify({ agentId, model, sources: agent.sources }),
+      lockKey: agentId,
+      startedAt: { lt: new Date(Date.now() - STALE_RUN_MS) },
+    },
+    data: {
+      status: 'failed',
+      error: 'Run timed out before finishing.',
+      finishedAt: new Date(),
+      lockKey: null,
     },
   })
+
+  let run: { id: string }
+  try {
+    run = await db.agentRun.create({
+      data: {
+        userId,
+        agentId,
+        status: 'running',
+        lockKey: agentId,
+        startedAt: new Date(),
+        inputSnap: JSON.stringify({ agentId, model, sources: agent.sources }),
+      },
+    })
+  } catch (error) {
+    if ((error as { code?: string }).code === 'P2002') {
+      throw new AppError('CONFLICT', 'This agent is already running.', 409)
+    }
+    throw error
+  }
+  runningAgents.add(agentId)
 
   try {
     const contextData = await gatherContext(db, userId, agentId, agent.sources, env)
@@ -371,7 +455,7 @@ export async function runAgent(
       )
       await db.agentRun.update({
         where: { id: run.id },
-        data: { status: 'success', outputSnap: explanation, finishedAt: new Date() },
+        data: { status: 'success', outputSnap: explanation, finishedAt: new Date(), lockKey: null },
       })
       await db.agent.update({
         where: { id: agentId },
@@ -436,6 +520,7 @@ export async function runAgent(
         outputSnap: aiText,
         tokensUsed,
         finishedAt: new Date(),
+        lockKey: null,
       },
     })
 
@@ -478,6 +563,7 @@ export async function runAgent(
         status: 'failed',
         error: errorMsg,
         finishedAt: new Date(),
+        lockKey: null,
       },
     })
 

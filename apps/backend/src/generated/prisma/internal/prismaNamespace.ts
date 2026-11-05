@@ -1745,6 +1745,7 @@ export const AgentRunScalarFieldEnum = {
   userId: 'userId',
   agentId: 'agentId',
   status: 'status',
+  lockKey: 'lockKey',
   inputSnap: 'inputSnap',
   outputSnap: 'outputSnap',
   toolCalls: 'toolCalls',
