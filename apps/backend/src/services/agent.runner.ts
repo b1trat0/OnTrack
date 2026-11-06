@@ -20,6 +20,7 @@ import { createAppointment } from './appointment.service'
 import { createTask } from './task.service'
 
 import { resolveOutputDestinations, type OutputDestination } from '../lib/output-destination'
+import { filterPendingActionsByDestination } from '../lib/output-destination'
 import { getEntitlements, type PlanId } from './entitlements.service'
 
 
@@ -577,10 +578,12 @@ export async function runAgent(
     })
 
 
-    // Dated events the calendar destination already wrote are withheld, so the
-    // approval modal cannot create a duplicate appointment for the same line.
-    const pendingRemaining = pendingActions.filter((action) => !written.consumed.includes(action))
-    const remaining = [...written.proposed, ...pendingRemaining].filter(
+    // Marker-line proposals are gated on the agent's selected destinations, then
+    // dated events the calendar already wrote are withheld. Draft-mode proposals
+    // from the destination writer are added before returning.
+    const proposed = filterPendingActionsByDestination(pendingActions, agent.output)
+    const remaining = proposed.filter((action) => !written.consumed.includes(action))
+    const allRemaining = [...written.proposed, ...remaining].filter(
       (action, index, list) =>
         list.findIndex(
           (candidate) =>
@@ -596,7 +599,7 @@ export async function runAgent(
       status: 'success',
       destinations: written.destinations,
       output: written.records,
-      ...(remaining.length > 0 ? { pendingActions: remaining } : {}),
+      ...(allRemaining.length > 0 ? { pendingActions: allRemaining } : {}),
       tokensUsed,
       durationMs: Date.now() - started,
     }
