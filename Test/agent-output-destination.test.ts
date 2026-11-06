@@ -212,21 +212,21 @@ test('an inbox-only agent proposes nothing, so the approval modal never opens', 
 })
 
 test('a proposal is kept only when the surface it writes to is selected', () => {
-  // task and event both become Appointment rows; note becomes a DiaryEntry and is
-  // gated on the Notes destination as the opt-in for proposing onto boards.
-  assert.deepEqual(filterPendingActionsByDestination([TASK, EVENT], ['message', 'calendar']), [TASK, EVENT])
+  // task becomes a Task on Notes; event becomes an Appointment on Calendar;
+  // note becomes a DiaryEntry and is gated on the Notes destination.
+  assert.deepEqual(filterPendingActionsByDestination([EVENT], ['message', 'calendar']), [EVENT])
+  assert.deepEqual(filterPendingActionsByDestination([TASK], ['message', 'note']), [TASK])
+  assert.deepEqual(filterPendingActionsByDestination([TASK], ['message', 'calendar']), [])
   assert.deepEqual(filterPendingActionsByDestination([EVENT], ['message', 'note']), [])
-  assert.deepEqual(filterPendingActionsByDestination([TASK], ['message', 'note']), [])
   assert.deepEqual(filterPendingActionsByDestination([NOTE], ['message', 'note']), [NOTE])
   assert.deepEqual(filterPendingActionsByDestination([NOTE], ['message', 'calendar']), [])
 })
 
 test('a partly-selected agent keeps only the proposals it can service', () => {
   assert.deepEqual(filterPendingActionsByDestination([TASK, EVENT, NOTE], ['message', 'calendar']), [
-    TASK,
     EVENT,
   ])
-  assert.deepEqual(filterPendingActionsByDestination([TASK, EVENT, NOTE], ['note']), [NOTE])
+  assert.deepEqual(filterPendingActionsByDestination([TASK, EVENT, NOTE], ['note']), [TASK, NOTE])
 })
 
 test('the gate drops an unrecognised proposal kind instead of passing it through', () => {
@@ -245,7 +245,7 @@ test('the gate takes output types, not destination names', () => {
 test('the gate keeps proposal order and does not mutate its input', () => {
   const input = [NOTE, TASK, EVENT]
   const filtered = filterPendingActionsByDestination(input, ['message', 'note'])
-  assert.deepEqual(filtered, [NOTE])
+  assert.deepEqual(filtered, [NOTE, TASK])
   assert.deepEqual(input, [NOTE, TASK, EVENT])
 })
 

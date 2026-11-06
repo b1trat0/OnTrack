@@ -14,12 +14,25 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "node --experimental-strip-types --test \"Test/*.test.ts\"",
+    "test:unit": "vitest run",
+    "test:api": "vitest run --config vitest.api.config.ts",
+    "test:e2e": "node scripts/e2e-env.mjs && playwright test",
+    "test:all": "npm test && npm run test:unit && npm run test:api",
+    "typecheck": "npm run build -w web && npm run build -w app && npx tsc --noEmit -p apps/backend/tsconfig.json",
     "format": "prettier --write \"**/*.{ts,tsx,md,js,jsx}\""
   },
   "devDependencies": {
     "@goatee/prettier": "^0.0.4",
+    "@playwright/test": "^1.64.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@vitest/coverage-v8": "^3.2.7",
+    "jsdom": "^31.0.0",
     "prettier": "latest",
-    "turbo": "2.4.2"
+    "turbo": "2.4.2",
+    "vitest": "^3.2.7"
   },
   "engines": {
     "node": ">=14.0.0"

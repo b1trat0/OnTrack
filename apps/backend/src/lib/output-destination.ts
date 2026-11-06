@@ -70,18 +70,14 @@ export function resolveOutputDestinations(outputTypes: readonly string[]): Outpu
 /**
  * The surface approving a proposal of each kind would actually write to.
  *
- * `task` and `event` both become `Appointment` rows — the Calendar page's "Task"
- * action and an entry respectively — so both gate on `calendar`.
- *
- * `note` is the exception: `createActionItems` writes it as a `DiaryEntry`, and
- * Diary is not a selectable destination. It gates on `notes` as a *policy* rather
- * than a routing claim: choosing the Notes destination is how a user says this
- * agent may propose things onto their boards at all. A kind missing here is
- * dropped rather than offered, so a new marker kind can never reach a surface
- * nobody chose.
+ * `task` becomes a real `Task` on the Notes board (approved via Option A), so
+ * it gates on `notes`. `event` becomes an `Appointment`, so it gates on
+ * `calendar`. `note` is a `DiaryEntry`, which is not a selectable destination;
+ * it gates on `notes` as the opt-in for proposing onto the user's boards.
+ * A kind missing here is dropped rather than offered.
  */
 const DESTINATION_BY_ACTION_KIND: Record<PendingActionKind, OutputDestination> = {
-  task: 'calendar',
+  task: 'notes',
   event: 'calendar',
   note: 'notes',
 }

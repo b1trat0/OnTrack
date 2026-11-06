@@ -21,7 +21,7 @@ export function menuKeyDown(event: ReactKeyboardEvent<HTMLElement>): void {
     event.currentTarget.querySelectorAll<HTMLElement>(
       '[role="menuitem"]:not([disabled]), [role="option"]:not([disabled])'
     )
-  ).filter((item) => item.getClientRects().length > 0)
+  )
   if (items.length === 0) return
 
   const current = items.indexOf(document.activeElement as HTMLElement)

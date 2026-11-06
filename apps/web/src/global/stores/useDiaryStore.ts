@@ -27,6 +27,7 @@ export type DiaryEntry = {
 }
 
 export const DIARY_PAGE_SIZE = 5
+export const LEGACY_PERSIST_KEY = 'ontrack-diary'
 
 const toDiaryEntry = (dto: DiaryDto): DiaryEntry => ({
   id: dto.id,
@@ -66,6 +67,20 @@ function pushSyncError(error: unknown): void {
   })
 }
 
+/**
+ * Deletes the legacy `ontrack-diary` localStorage key.
+ *
+ * The store no longer reads or writes that key, but cached entries from older
+ * builds would otherwise sit on disk in plaintext. Call once at startup.
+ */
+export function purgeLegacyDiaryCache(): void {
+  try {
+    localStorage.removeItem(LEGACY_PERSIST_KEY)
+  } catch {
+    // Private-mode / storage-disabled browsers throw on access; boot must continue.
+  }
+}
+
 type DiaryStore = {
   entries: DiaryEntry[]
   hasMore: boolean
@@ -85,62 +100,16 @@ type DiaryStore = {
     patch: Partial<Omit<DiaryEntry, 'id' | 'createdAt' | 'updatedAt'>>
   ) => void
   removeEntry: (id: string) => void
-  /** Verifies the account password, permanently unhides the entry (DB + store), returns nothing on success. */
+  /** Verifies the account password, permanently unhides the entry (DB + store). */
   reveal: (id: string, password: string) => Promise<void>
-}
-
-
-export const useDiaryStore = create<DiaryStore>()(
-  persist(
-    (set, get) => {
-      async function refreshCurrentMonth(): Promise<void> {
-        const expected = get().epoch + 1
-        set({ loadStatus: 'loading', epoch: expected })
-        try {
-          const month = get().activeMonth
-          const page = await loadDiary(month, 0, DIARY_PAGE_SIZE)
-          if (get().epoch !== expected) return
-          set((state) => ({
-            entries: mergeEntries(state.entries, page.entries.map(toDiaryEntry)),
-            hasMore: page.hasMore,
-            loadStatus: 'loaded',
-          }))
-        } catch (error) {
-          if (get().epoch === expected) set({ loadStatus: 'error' })
-          pushSyncError(error)
-        } finally {
-          if (get().loadStatus === 'loading' && get().epoch !== expected) {
-            set({ loadStatus: 'idle' })
-          }
-        }
-      }
-
-
-/**
- * Deletes the legacy `ontrack-diary` localStorage key.
- *
- * Dropping the `persist` wrapper stops the store *reading* the key, but the
- * cached entries — another account's private writing, in plaintext — would sit
- * on disk indefinitely. Call once at startup. No-op when the key is absent.
- */
-export function purgeLegacyDiaryCache(): void {
-  try {
-    localStorage.removeItem(LEGACY_PERSIST_KEY)
-  } catch (error) {
-    // Private-mode / storage-disabled browsers throw on access. Nothing to purge
-    // there, and a diary read failure must not block app boot.
-    console.warn('Could not purge legacy diary cache', error)
-  }
 }
 
 /**
  * Diary store. Server-backed only — the DB is the single source of truth.
  *
  * Deliberately NOT wrapped in zustand `persist`: diary entries are private per
- * account, and a `localStorage` copy is shared by every account that signs in on
- * the same machine. User B would see User A's entries on their first paint.
- * `apps/web/src/global/lib/crossWindowSync.ts` therefore skips this store too —
- * there is nothing to rehydrate across windows.
+ * account, and a localStorage copy is shared by every account that signs in on
+ * the same machine. User B would see User A's entries on first paint.
  */
 export const useDiaryStore = create<DiaryStore>()((set, get) => {
   async function refreshCurrentMonth(): Promise<void> {
@@ -158,89 +127,50 @@ export const useDiaryStore = create<DiaryStore>()((set, get) => {
     } catch (error) {
       if (get().epoch === expected) set({ loadStatus: 'error' })
       pushSyncError(error)
+    } finally {
+      if (get().loadStatus === 'loading' && get().epoch !== expected) {
+        set({ loadStatus: 'idle' })
+      }
     }
   }
 
-        ensureLoaded: async () => {
-          if (get().loadStatus === 'loading' || get().loadStatus === 'loaded') return
-          set({ loadStatus: 'loading' })
-          const epoch = get().epoch
-          try {
-            const first = await loadDiary(null, 0, 1)
-            if (get().epoch !== epoch) return
-            if (first.entries.length > 0) {
-              const latest = toDiaryEntry(first.entries[0])
-              set((state) => ({
-                entries: mergeEntries(state.entries, [latest]),
-                loadStatus: 'loaded',
-              }))
-            } else {
-              // Never upload the previous account's cache as a "seed". The
-              // server is the source of truth; an empty account stays empty.
-              set({ loadStatus: 'loaded' })
-            }
-          } catch (error) {
-            if (get().epoch === epoch) set({ loadStatus: 'error' })
-            pushSyncError(error)
-          } finally {
-            if (get().loadStatus === 'loading' && get().epoch !== epoch) {
-              set({ loadStatus: 'idle' })
-            }
-          }
-        },
+  return {
+    entries: [],
+    hasMore: false,
+    loadStatus: 'idle',
+    activeMonth: null,
+    epoch: 0,
 
-        ensureMonth: async (month) => {
-          if (
-            get().activeMonth === month &&
-            get().loadStatus === 'loaded' &&
-            get().entries.some((entry) => matchesMonth(entry, month))
-          ) {
-            return
-          }
-          set({ activeMonth: month, loadStatus: 'loading', epoch: get().epoch + 1 })
-          const expected = get().epoch
-          try {
-            const page = await loadDiary(month, 0, DIARY_PAGE_SIZE)
-            if (get().epoch !== expected) return
-            set((state) => ({
-              entries: mergeEntries(state.entries, page.entries.map(toDiaryEntry)),
-              hasMore: page.hasMore,
-              loadStatus: 'loaded',
-            }))
-          } catch (error) {
-            if (get().epoch === expected) set({ loadStatus: 'error' })
-            pushSyncError(error)
-          } finally {
-            if (get().loadStatus === 'loading' && get().epoch !== expected) {
-              set({ loadStatus: 'idle' })
-            }
-          }
-        },
+    refresh: async () => {
+      await refreshCurrentMonth()
+    },
 
-        loadMore: async () => {
-          if (get().loadStatus !== 'loaded' || !get().hasMore) return
-          set({ loadStatus: 'loading', epoch: get().epoch + 1 })
-          const expected = get().epoch
-          try {
-            const month = get().activeMonth
-            const offset = get().entries.filter((entry) => matchesMonth(entry, month)).length
-            const page = await loadDiary(month, offset, DIARY_PAGE_SIZE)
-            if (get().epoch !== expected) return
-            set((state) => ({
-              entries: mergeEntries(state.entries, page.entries.map(toDiaryEntry)),
-              hasMore: page.hasMore,
-              loadStatus: 'loaded',
-            }))
-          } catch (error) {
-            if (get().epoch === expected) set({ loadStatus: 'error' })
-            pushSyncError(error)
-          } finally {
-            if (get().loadStatus === 'loading' && get().epoch !== expected) {
-              set({ loadStatus: 'idle' })
-            }
-          }
-        },
-
+    ensureLoaded: async () => {
+      if (get().loadStatus === 'loading' || get().loadStatus === 'loaded') return
+      set({ loadStatus: 'loading' })
+      const epoch = get().epoch
+      try {
+        const first = await loadDiary(null, 0, 1)
+        if (get().epoch !== epoch) return
+        if (first.entries.length > 0) {
+          const latest = toDiaryEntry(first.entries[0])
+          set((state) => ({
+            entries: mergeEntries(state.entries, [latest]),
+            loadStatus: 'loaded',
+          }))
+        } else {
+          // Never upload the previous account's cache as a seed.
+          set({ loadStatus: 'loaded' })
+        }
+      } catch (error) {
+        if (get().epoch === epoch) set({ loadStatus: 'error' })
+        pushSyncError(error)
+      } finally {
+        if (get().loadStatus === 'loading' && get().epoch !== epoch) {
+          set({ loadStatus: 'idle' })
+        }
+      }
+    },
 
     ensureMonth: async (month) => {
       if (
@@ -263,6 +193,10 @@ export const useDiaryStore = create<DiaryStore>()((set, get) => {
       } catch (error) {
         if (get().epoch === expected) set({ loadStatus: 'error' })
         pushSyncError(error)
+      } finally {
+        if (get().loadStatus === 'loading' && get().epoch !== expected) {
+          set({ loadStatus: 'idle' })
+        }
       }
     },
 
@@ -272,9 +206,7 @@ export const useDiaryStore = create<DiaryStore>()((set, get) => {
       const expected = get().epoch
       try {
         const month = get().activeMonth
-        const offset = get().entries.filter((entry) =>
-          matchesMonth(entry, month)
-        ).length
+        const offset = get().entries.filter((entry) => matchesMonth(entry, month)).length
         const page = await loadDiary(month, offset, DIARY_PAGE_SIZE)
         if (get().epoch !== expected) return
         set((state) => ({
@@ -285,6 +217,10 @@ export const useDiaryStore = create<DiaryStore>()((set, get) => {
       } catch (error) {
         if (get().epoch === expected) set({ loadStatus: 'error' })
         pushSyncError(error)
+      } finally {
+        if (get().loadStatus === 'loading' && get().epoch !== expected) {
+          set({ loadStatus: 'idle' })
+        }
       }
     },
 

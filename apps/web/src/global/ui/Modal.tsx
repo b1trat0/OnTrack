@@ -25,12 +25,12 @@ export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: Mo
 
     const panel = ref.current
     const focusables = () =>
-      Array.from(panel?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter(
-        (element) => element.getClientRects().length > 0
-      )
+      Array.from(panel?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])
 
     const first = focusables()[0]
-    const preferred = panel?.querySelector<HTMLElement>('[data-autofocus], [autofocus]')
+    const preferred =
+      panel?.querySelector<HTMLElement>('[data-autofocus], [autofocus]') ??
+      panel?.querySelector<HTMLElement>('input:not([type="hidden"]), select, textarea')
     ;(preferred ?? first ?? panel)?.focus()
 
     const onKey = (event: KeyboardEvent) => {

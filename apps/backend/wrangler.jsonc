@@ -8,6 +8,13 @@
   ],
   "vars": {
     "WEB_URL": "http://localhost:3456"
+  },
+  "env": {
+    "e2e": {
+      "vars": {
+        "WEB_URL": "http://localhost:3456"
+      }
+    }
   }
   // Hyperdrive (production): create a config in Cloudflare, then add
   // "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<config-id>" }]
