@@ -5,10 +5,12 @@ import { App } from './App'
 import { enableCrossWindowSync } from './global/lib/crossWindowSync'
 import { syncActiveUser } from './global/lib/userData'
 import { resetUserStores } from './global/stores/resetStores'
+
 import { subscribeAuthEvents, useUserStore } from './global/stores/useUserStore'
 import { ErrorBoundary } from './global/ui/ErrorBoundary'
 import './index.css'
 
+purgeLegacyDiaryCache()
 enableCrossWindowSync()
 subscribeAuthEvents()
 
